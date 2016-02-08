@@ -13,6 +13,7 @@
     "redis": "github:DefinitelyTyped/DefinitelyTyped/redis/redis.d.ts#bf4e9e95314a59977d71e850508d40913b145c1d",
     "redux": "github:DefinitelyTyped/DefinitelyTyped/redux/redux.d.ts#d4f3ed0cc7f7aba3b47dc6dbc68ead8a97052fe4",
     "redux-thunk": "github:DefinitelyTyped/DefinitelyTyped/redux-thunk/redux-thunk.d.ts#75249b97104d00c1ca2451ac29369009a5f2b101",
+    "rethinkdb": "github:DefinitelyTyped/DefinitelyTyped/rethinkdb/rethinkdb.d.ts#3e7df0c95a5136d899c977d019744d3e5efbfe97",
     "serve-static": "github:DefinitelyTyped/DefinitelyTyped/serve-static/serve-static.d.ts#0fa4e9e61385646ea6a4cba2aef357353d2ce77f",
     "ws": "github:DefinitelyTyped/DefinitelyTyped/ws/ws.d.ts#ea10ebfa5775e7f85cd6947094dca185d7b3d33e"
   }
