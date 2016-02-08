@@ -1,0 +1,10 @@
+.DS_Store
+.env
+.npm
+.tmp
+dist
+jspm_packages
+node_modules
+rethinkdb_data
+typings
+npm-debug.log
