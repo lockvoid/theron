@@ -33,7 +33,7 @@ function clean() {
 var httpProcess = null;
 
 function startHttp(done) {
-  httpProcess = cprocess.spawn('node', ['bin/web'], { stdio: 'inherit' });
+  httpProcess = cprocess.spawn('node', ['--harmony-destructuring', 'bin/web'], { stdio: 'inherit' });
   done();
 }
 
@@ -47,7 +47,7 @@ function closeHttp(done) {
 const serverProject = ts.createProject('app/server/tsconfig.json', { typescript: typescript });
 
 function buildServer() {
-  const source = ['{app/server,lib}/**/*.{ts,tsx}', 'node_modules/typescript/lib/lib.es6.d.ts', 'typings/main.d.ts'];
+  const source = ['{app/server,lib}/**/*.{ts,tsx}', 'typings/main.d.ts'];
   const result = gulp.src(source).pipe(sourcemaps.init()).pipe(preprocess({ context: { SERVER: true }, includeBase: __dirname })).pipe(ts(serverProject));
 
   return result.js.pipe(sourcemaps.write()).pipe(gulp.dest('dist/server'));
@@ -62,7 +62,7 @@ function watchServer() {
 const socketProject = ts.createProject('app/socket/tsconfig.json', { typescript: typescript });
 
 function buildSocket() {
-  const source = ['{app/socket,lib}/**/*.{ts,tsx}', 'node_modules/typescript/lib/lib.es6.d.ts', 'typings/main.d.ts'];
+  const source = ['{app/socket,lib}/**/*.{ts,tsx}', 'typings/main.d.ts'];
   const result = gulp.src(source).pipe(sourcemaps.init()).pipe(preprocess({ context: { SOCKET: true }, includeBase: __dirname })).pipe(ts(socketProject));
 
   return result.js.pipe(sourcemaps.write()).pipe(gulp.dest('dist/socket'));
