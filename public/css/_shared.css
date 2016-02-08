@@ -13,6 +13,10 @@ body {
   margin: 0;
 }
 
+body.app {
+  background-color: color(white b(5%));
+}
+
 *, *:before, *:after {
   -webkit-font-smoothing: antialiased;
   box-sizing: inherit !important;
@@ -110,5 +114,18 @@ input[type="text"], input[type="search"] {
 
   &::placeholder {
     color: color(white b(50%));
+  }
+
+  &.material {
+    border-bottom: 1px solid color(white b(20%));
+    background: transparent;
+    margin-bottom: 8px;
+    padding: 8px 0px;
+    width: 100%;
+
+    &:focus {
+      border-bottom: 2px solid $color-theron;
+      margin-bottom: 7px;
+    }
   }
 }
