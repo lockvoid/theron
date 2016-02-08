@@ -60,7 +60,7 @@ class TodoApp extends React.Component<any, any> {
       <main>
         <h1>Todos</h1>
 
-        <input className="material" type="text" onKeyUp={this.addTodo.bind(this)} />
+        <input className="material" type="text" onKeyUp={this.addTodo.bind(this)} placeholder="What needs to be done?" />
 
         <TodoList {...this.props} />
       </main>
