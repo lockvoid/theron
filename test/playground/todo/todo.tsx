@@ -1,13 +1,34 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
+import sagaMiddleware from 'redux-saga'
 
-import { Reducer, combineReducers, createStore, compose } from 'redux';
+import { Reducer, combineReducers, applyMiddleware, createStore } from 'redux';
 import { Provider, MapStateToProps, MapDispatchToPropsFunction, connect } from 'react-redux';
 import { List } from 'immutable';
 
 import { Theron } from '../../../app/driver/driver';
 
+// Records
+
+interface TodoRecord {
+  name: string;
+}
+
+// Constants
+
+const CONNECT_THERON = 'CONNECT_THERON';
 const TODO_ADDED = 'TODO_ADDED';
+
+// Reducers
+
+const theron: Reducer = (state = null, action) => {
+  switch (action.type) {
+    case CONNECT_THERON:
+      return new Theron(action.url);
+    default:
+      return state;
+  }
+}
 
 const todos: Reducer = (state: List<TodoRecord> = List([{ name: 'Go shopping...' }]), action) =>  {
   switch (action.type) {
@@ -18,13 +39,17 @@ const todos: Reducer = (state: List<TodoRecord> = List([{ name: 'Go shopping...'
   }
 }
 
+// Actions
+
+const connectTheron = (url: string) => {
+  return { type: CONNECT_THERON, url };
+}
+
 const addTodo = (name: string) => {
   return { type: TODO_ADDED, name };
 }
 
-interface TodoRecord {
-  name: string;
-}
+// Components
 
 const TodoList = ({ todos }) => (
   <ul>
@@ -68,7 +93,9 @@ class TodoApp extends React.Component<any, any> {
   }
 }
 
-const store = createStore(combineReducers({ todos }));
+const store = createStore(combineReducers({ theron, todos }));
+
+store.dispatch(connectTheron('ws://0.0.0.0:9090/echo?db=todos'));
 
 const bootstrap = (
   <Provider store={store}>

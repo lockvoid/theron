@@ -13,7 +13,8 @@ app.use((req, res, next) => {
 });
 
 if (app.get('env') === 'development') {
-  app.use('/assets', express.static('./dist/client'));
+  app.use('/', express.static('./dist/client'));
+  app.use('/', express.static('./dist/driver'));
 
   // Serve playground
 

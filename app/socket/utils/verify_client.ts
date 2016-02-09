@@ -1,4 +1,4 @@
-import * as qs from 'qs'
+import * as qs from 'qs';
 import * as r from 'rethinkdb';
 import * as url from 'url';
 
