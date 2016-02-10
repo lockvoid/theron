@@ -1,18 +1,24 @@
-import { WebSocketSubject } from 'rxjs/observable/dom/webSocket';
+import { Observable } from 'rxjs/Observable';
 
-import { BaseAction } from '../../lib/base_action';
+import { TheronQueryOptions } from '../../lib/query_options';
+import { TheronQueryObservable } from './query_observable';
+import { SocketManager } from './socket_manager';
 
 export class Theron {
-  protected ws: WebSocketSubject<BaseAction>;
+  protected _socketManager: SocketManager<any>;
 
   constructor(url: string) {
-    this.ws = new WebSocketSubject(url);
-    this.ws.subscribe(this.cacheAction.bind(this), this.tryConnect.bind(this));
+    this._socketManager = new SocketManager(url);
+    this._socketManager.subscribe(this._cacheAction.bind(this), this._tryConnect.bind(this));
   }
 
-  protected cacheAction() {
+  query<T>(options: TheronQueryOptions): TheronQueryObservable<T> {
+    return new TheronQueryObservable(this._socketManager, options);
   }
 
-  protected tryConnect() {
+  protected _cacheAction(action) {
+  }
+
+  protected _tryConnect() {
   }
 }

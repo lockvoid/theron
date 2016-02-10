@@ -1,12 +1,13 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import sagaMiddleware from 'redux-saga'
 
 import { Reducer, combineReducers, applyMiddleware, createStore } from 'redux';
 import { Provider, MapStateToProps, MapDispatchToPropsFunction, connect } from 'react-redux';
 import { List } from 'immutable';
+import { Subscription } from 'rxjs/Subscription';
 
 import { Theron } from '../../../app/driver/driver';
+import { TheronQueryObservable } from '../../../app/driver/query_observable';
 
 // Records
 
@@ -71,6 +72,20 @@ const mapDispatchToProps: MapDispatchToPropsFunction = (dispatch) => {
 
 @connect(mapStateToProps, mapDispatchToProps)
 class TodoApp extends React.Component<any, any> {
+  private _todos: Subscription;
+
+  componentWillMount() {
+    const { theron } = this.props;
+
+    this._todos = theron.query({}).subscribe(value => {
+      console.log(value);
+    });
+  }
+
+  componentWillUnmount() {
+    this._todos.unsubscribe();
+  }
+
   addTodo(event) {
     if (event.keyCode === 13) {
       this.props.onEnterPress(event.target.value);

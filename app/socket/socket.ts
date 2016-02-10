@@ -1,6 +1,13 @@
 import * as r from 'rethinkdb';
 import * as ws from 'ws';
 
+import { Subject } from 'rxjs/Subject';
+import { ReplaySubject } from 'rxjs/subject/ReplaySubject';
+import { Subscriber } from 'rxjs/Subscriber';
+
+import { SUBSCRIBE_QUERY, UNSUBSCRIBE_QUERY, QUERY_VALID, QUERY_INVALID } from '../../lib/constants/actions';
+import { TheronBaseAction } from '../../lib/base_action';
+import { PARSE_ERROR } from '../../lib/constants/errors';
 import { verifyClient } from './utils/verify_client';
 
 export const app = (httpServer) => {
@@ -11,6 +18,21 @@ export const app = (httpServer) => {
 
     ws.on('close', () => {
       db.close();
+    });
+
+    ws.on('message', (message) => {
+      try {
+        var action = JSON.parse(message);
+      } catch(err) {
+        return console.log(message);
+      }
+
+      switch (action.type) {
+        case SUBSCRIBE_QUERY:
+          return ws.send(JSON.stringify({ type: QUERY_VALID, subscriptionKey: action.subscriptionKey, queryKey: 'queryKey' }));
+        case UNSUBSCRIBE_QUERY:
+          return ws.send(JSON.stringify({ type: QUERY_VALID, subscriptionKey: action.subscriptionKey, queryKey: 'queryKey' }));
+      }
     });
   });
 }

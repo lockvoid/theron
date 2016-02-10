@@ -1,3 +1,4 @@
-export interface BaseAction {
+export interface TheronBaseAction {
   type: string;
+  reason?: string;
 }
