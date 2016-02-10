@@ -33,12 +33,17 @@ function clean() {
 var httpProcess = null;
 
 function startHttp(done) {
-  httpProcess = cprocess.spawn('node', ['--harmony-destructuring', 'bin/web'], { stdio: 'inherit' });
+  if (!httpProcess) {
+    httpProcess = cprocess.spawn('node', ['--harmony-destructuring', 'bin/web'], { stdio: 'inherit' });
+  }
+
   done();
 }
 
 function closeHttp(done) {
   httpProcess && httpProcess.kill();
+  httpProcess = null;
+
   done();
 }
 
