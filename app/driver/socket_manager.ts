@@ -1,6 +1,6 @@
 import { WebSocketSubject } from 'rxjs/observable/dom/webSocket';
 
-import { TheronBaseAction } from '../../lib/base_action';
+import { TheronBaseAction } from '../../lib/actions';
 
 export class SocketManager<T extends TheronBaseAction> extends WebSocketSubject<T> {
   protected _next(action: TheronBaseAction): void {

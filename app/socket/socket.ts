@@ -5,9 +5,8 @@ import { Subject } from 'rxjs/Subject';
 import { ReplaySubject } from 'rxjs/subject/ReplaySubject';
 import { Subscriber } from 'rxjs/Subscriber';
 
-import { SUBSCRIBE_QUERY, UNSUBSCRIBE_QUERY, QUERY_VALID, QUERY_INVALID } from '../../lib/constants/actions';
-import { TheronBaseAction } from '../../lib/base_action';
-import { PARSE_ERROR } from '../../lib/constants/errors';
+import { PARSE_ERROR, SUBSCRIBE_QUERY, UNSUBSCRIBE_QUERY, QUERY_VALID, QUERY_INVALID } from '../../lib/constants';
+import { TheronBaseAction } from '../../lib/actions';
 import { verifyClient } from './utils/verify_client';
 
 export const app = (httpServer) => {

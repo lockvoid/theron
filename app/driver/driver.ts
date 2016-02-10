@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs/Observable';
 
-import { TheronQueryOptions } from '../../lib/query_options';
+import { TheronQueryAction } from '../../lib/actions';
 import { TheronQueryObservable } from './query_observable';
 import { SocketManager } from './socket_manager';
 
@@ -12,7 +12,7 @@ export class Theron {
     this._socketManager.subscribe(this._cacheAction.bind(this), this._tryConnect.bind(this));
   }
 
-  query<T>(options: TheronQueryOptions): TheronQueryObservable<T> {
+  query<T>(options: TheronQueryAction): TheronQueryObservable<T> {
     return new TheronQueryObservable(this._socketManager, options);
   }
 
