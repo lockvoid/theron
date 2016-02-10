@@ -94,7 +94,7 @@ function watchClient() {
 
 // Driver
 
-const driverProject = ts.createProject('app/client/tsconfig.json', { typescript: typescript });
+const driverProject = ts.createProject('app/driver/tsconfig.json', { typescript: typescript });
 
 function buildDriver() {
   const source = ['{app/driver,lib,test/playground}/**/*.{ts,tsx}', 'node_modules/typescript/lib/lib.es6.d.ts', 'typings/browser.d.ts'];
