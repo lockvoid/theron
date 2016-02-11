@@ -5,13 +5,14 @@ import { WebSocketSubject } from 'rxjs/observable/dom/webSocket';
 
 import { SUBSCRIBE_QUERY, UNSUBSCRIBE_QUERY, QUERY_VALID, QUERY_INVALID } from '../../lib/constants';
 import { TheronSubscriptionAction, TheronQueryAction, TheronDataAction } from '../../lib/actions';
+import { DataManager } from './data_manager';
 import { SocketManager } from './socket_manager';
 import { uuid } from '../../lib/utils/uuid';
 
 export class TheronQueryObservable<T> extends Observable<TheronSubscriptionAction> {
   private _subscriptionKey: string = uuid();
 
-  constructor(private _socketManager: SocketManager<TheronSubscriptionAction>, private _queryOptions: TheronQueryAction) {
+  constructor(private _socketManager: SocketManager<TheronSubscriptionAction>, private _dataManager: DataManager<any>, private _queryOptions: TheronQueryAction) {
     super();
   }
 
@@ -20,15 +21,15 @@ export class TheronQueryObservable<T> extends Observable<TheronSubscriptionActio
   }
 
   /* protected */ _subscribe(subscriber: Subscriber<TheronDataAction<T>>): Subscription | Function | void {
-    let subscription = this._createChannel().subscribe(action => this._connectCache(subscriber, action), err => subscriber.error(err));
+    let subscription = this._createChannel().subscribe(action => this._connectData(subscriber, action), err => subscriber.error(err));
 
     subscriber.add(new Subscription(() => {
       subscription.unsubscribe();
     }));
   }
 
-  protected _connectCache(subscriber: Subscriber<TheronDataAction<T>>, { queryKey }: TheronSubscriptionAction) {
-    console.log(queryKey);
+  protected _connectData(subscriber: Subscriber<TheronDataAction<T>>, { queryKey }: TheronSubscriptionAction) {
+    this._dataManager.filter(action => action.queryKey === queryKey).subscribe(subscriber);
   }
 
   protected _createChannel(): Observable<TheronSubscriptionAction>  {

@@ -12,7 +12,7 @@ export interface TheronSubscriptionAction extends TheronBaseAction, TheronErrorA
   queryKey?: string;
 }
 
-export interface TheronDataAction<T> extends TheronBaseAction, TheronErrorAction {
+export interface TheronDataAction<T> extends TheronBaseAction, TheronErrorAction, TheronSubscriptionAction {
   snapshot: T & { id: string };
   newOffset: number;
   wasOffset: number;
