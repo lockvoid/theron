@@ -1,19 +1,42 @@
+import * as pg from 'pg';
 import * as qs from 'qs';
-import * as r from 'rethinkdb';
 import * as url from 'url';
+import * as sql from 'sql-bricks-postgres';
 
-export const verifyClient = async ({ origin, req, secure }, done) => {
-  try {
-    let { db } = qs.parse(url.parse(req.url).query);
+export const verifyClient = async ({ origin, req, secure }, valid) => {
+  let { app, secret } = qs.parse(url.parse(req.url).query);
 
-    req.db = await r.connect({ host: process.env['RETHINK_HOST'], port: process.env['RETHINK_PORT'] })
-
-    if (!(await r.dbList().contains(db).run(req.db))) {
-      throw `Database "${db}" doesn't exists`;
+  pg.connect(process.env['POSTGRES_URL'] || 'error', (err, appConnection, closeConnection) => {
+    if (err) {
+      return valid(false, 500, 'Theron internal error')
     }
 
-    done(true)
-  } catch (err) {
-    done(false, 400, err.toString())
-  }
+    appConnection.query(sql.select('db').from('apps').where(secret ? { name: app, secret } : { name: app }).toString(), (err, res) => {
+      if (err) {
+        valid(false, 500, 'Theron internal error');
+        return closeConnection();
+      }
+
+      if (!res.rows.length) {
+        valid(false, 404, `App doesn't exist`);
+        return closeConnection();
+      }
+
+      const { db } = res.rows[0];
+
+      pg.connect(db || 'error', (err, clientConnection, clientClose) => {
+        if (err) {
+          valid(false, 403, err.toString());
+          return closeConnection();
+        }
+
+        req.db = clientConnection;
+        req.dbClose = clientClose;
+        req.dbAdmin = !!secret;
+
+        closeConnection();
+        valid(true);
+      });
+    });
+  });
 }

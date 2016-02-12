@@ -1,5 +1,5 @@
-import * as r from 'rethinkdb';
 import * as ws from 'ws';
+import * as pg from 'pg';
 
 import { Subject } from 'rxjs/Subject';
 import { ReplaySubject } from 'rxjs/subject/ReplaySubject';
@@ -13,10 +13,16 @@ export const app = (httpServer) => {
   const wsServer = new ws.Server({ server: httpServer, path: '/echo', verifyClient });
 
   wsServer.on('connection', ws => {
-    let { db } = <any>ws.upgradeReq;
+    let { db, dbClose, dbAdmin } = <{ db: pg.Client, dbClose: Function, dbAdmin: boolean }>(<any>ws.upgradeReq);
+
+    db.on('notification', message => {
+      console.log(message);
+    });
+
+    db.query('LISTEN watchers');
 
     ws.on('close', () => {
-      db.close();
+      dbClose();
     });
 
     ws.on('message', (message) => {
@@ -35,4 +41,3 @@ export const app = (httpServer) => {
     });
   });
 }
-

@@ -2,7 +2,6 @@ System.config({
   baseURL: "/",
   defaultJSExtensions: true,
   transpiler: false,
-
   paths: {
     "github:*": "jspm_packages/github/*",
     "npm:*": "jspm_packages/npm/*"
@@ -13,10 +12,12 @@ System.config({
     "babel-runtime": "npm:babel-runtime@5.8.35",
     "core-js": "npm:core-js@1.2.6",
     "immutable": "npm:immutable@3.7.6",
+    "qs": "npm:qs@6.1.0",
     "react": "npm:react@0.14.7",
     "react-dom": "npm:react-dom@0.14.7",
     "react-redux": "npm:react-redux@4.4.0",
     "redux": "npm:redux@3.3.1",
+    "redux-saga": "npm:redux-saga@0.7.0",
     "redux-thunk": "npm:redux-thunk@1.0.3",
     "rxjs": "npm:rxjs@5.0.0-beta.1",
     "github:jspm/nodelibs-assert@0.1.0": {
@@ -113,6 +114,9 @@ System.config({
       "process": "github:jspm/nodelibs-process@0.1.2",
       "stream-browserify": "npm:stream-browserify@1.0.0",
       "string_decoder": "npm:string_decoder@0.10.31"
+    },
+    "npm:redux-saga@0.7.0": {
+      "process": "github:jspm/nodelibs-process@0.1.2"
     },
     "npm:redux@3.3.1": {
       "lodash": "npm:lodash@4.2.1",

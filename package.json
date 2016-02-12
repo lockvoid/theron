@@ -9,19 +9,24 @@
     "url": "git+https://github.com/rosendi/theron.git"
   },
   "dependencies": {
+    "async": "^1.5.2",
     "express": "^4.13.3",
     "immutable": "^3.7.6",
     "jspm": "^0.16.26",
+    "pg": "^4.4.4",
+    "pg-promise": "^3.1.6",
     "qs": "^6.1.0",
     "react": "^0.14.7",
     "react-dom": "^0.14.7",
-    "rethinkdb": "^2.2.1",
     "rxjs": "^5.0.0-beta.1",
     "serve-static": "^1.10.2",
+    "sql-bricks-postgres": "^0.4.2",
     "ws": "^1.0.1"
   },
   "devDependencies": {
     "autoprefixer": "^6.1.2",
+    "db-migrate": "^0.10.0-beta.11",
+    "db-migrate-pg": "^0.1.9",
     "del": "^2.2.0",
     "dotenv": "^2.0.0",
     "gulp": "gulpjs/gulp#4.0",
@@ -32,17 +37,18 @@
     "gulp-rev": "^6.0.1",
     "gulp-rev-replace": "^0.4.3",
     "gulp-sourcemaps": "^1.6.0",
-    "gulp-typescript": "^2.9.2",
+    "gulp-typescript": "file:/Temporary/gulp-typescript",
     "jspm": "^0.16.19",
     "merge2": "^1.0.1",
     "precss": "^1.3.0",
     "preprocess": "git+https://github.com/rosendi/preprocess.git#fix/tsx",
-    "typescript": "^1.8.0",
+    "typescript": "^1.9.0-dev.20160210",
     "typings": "^0.6.1"
   },
   "jspm": {
     "dependencies": {
       "immutable": "npm:immutable@^3.7.6",
+      "qs": "npm:qs@^6.1.0",
       "react": "npm:react@^0.14.7",
       "react-dom": "npm:react-dom@^0.14.7",
       "react-redux": "npm:react-redux@^4.2.1",

@@ -5,12 +5,14 @@ import { TheronQueryObservable } from './query_observable';
 import { DataManager } from './data_manager';
 import { SocketManager } from './socket_manager';
 
+import * as qs from 'qs';
+
 export class Theron {
   protected _dataManager = new DataManager<TheronDataAction<any>>();
   protected _socketManager: SocketManager<TheronBaseAction>;
 
-  constructor(url: string) {
-    this._socketManager = new SocketManager(url);
+  constructor(url: string, options: { app: string, secret?: string }) {
+    this._socketManager = new SocketManager(`${url}?${qs.stringify(options)}`);
     this._socketManager.subscribe(this._processAction.bind(this), this._tryConnect.bind(this));
   }
 
@@ -22,6 +24,8 @@ export class Theron {
     this._dataManager.next(action);
   }
 
-  protected _tryConnect() {
+  protected _tryConnect(err, s) {
+    console.log(s);
+
   }
 }

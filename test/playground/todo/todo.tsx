@@ -25,7 +25,7 @@ const TODO_ADDED = 'TODO_ADDED';
 const theron: Reducer = (state = null, action) => {
   switch (action.type) {
     case CONNECT_THERON:
-      return new Theron(action.url);
+      return new Theron(action.url, action.options);
     default:
       return state;
   }
@@ -42,8 +42,8 @@ const todos: Reducer = (state: List<TodoRecord> = List([{ name: 'Go shopping...'
 
 // Actions
 
-const connectTheron = (url: string) => {
-  return { type: CONNECT_THERON, url };
+const connectTheron = (url: string, options: { app: string }) => {
+  return { type: CONNECT_THERON, url, options };
 }
 
 const addTodo = (name: string) => {
@@ -110,7 +110,7 @@ class TodoApp extends React.Component<any, any> {
 
 const store = createStore(combineReducers({ theron, todos }));
 
-store.dispatch(connectTheron('ws://0.0.0.0:9090/echo?db=todos'));
+store.dispatch(connectTheron('ws://0.0.0.0:9090/echo', { app: 'todos' }));
 
 const bootstrap = (
   <Provider store={store}>
