@@ -11,7 +11,7 @@ export const verifyClient = async ({ origin, req, secure }, valid) => {
       return valid(false, 500, 'Theron internal error')
     }
 
-    appConnection.query(sql.select('db').from('apps').where(secret ? { name: app, secret } : { name: app }).toString(), (err, res) => {
+    appConnection.query(sql.select('id, db').from('apps').where(secret ? { name: app, secret } : { name: app }).toString(), (err, res) => {
       if (err) {
         valid(false, 500, 'Theron internal error');
         return closeConnection();
@@ -22,7 +22,7 @@ export const verifyClient = async ({ origin, req, secure }, valid) => {
         return closeConnection();
       }
 
-      const { db } = res.rows[0];
+      const { id, name, db } = res.rows[0];
 
       pg.connect(db || 'error', (err, clientConnection, clientClose) => {
         if (err) {
@@ -31,8 +31,10 @@ export const verifyClient = async ({ origin, req, secure }, valid) => {
         }
 
         req.db = clientConnection;
+        req.appId = id;
+        req.appName = name;
+        req.appAdmin = !!secret;
         req.dbClose = clientClose;
-        req.dbAdmin = !!secret;
 
         closeConnection();
         valid(true);
