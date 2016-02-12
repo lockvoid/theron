@@ -18,9 +18,9 @@ const typescript = require('typescript');
 
 dotenv.config({ silent: true });
 
-const buildTasks = gulp.parallel(buildServer, buildSocket, buildClient, buildDriver, buildCss, copyAssets);
+const buildTasks = gulp.parallel(buildSystem, buildServer, buildSocket, buildClient, buildDriver, buildCss, copyAssets);
 
-const watchTasks = gulp.parallel(watchServer, watchSocket, watchClient, watchDriver, watchCss, watchAssets);
+const watchTasks = gulp.parallel(watchSystem, watchServer, watchSocket, watchClient, watchDriver, watchCss, watchAssets);
 
 gulp.task('default', gulp.series(clean, buildTasks, startHttp, watchTasks));
 
@@ -47,6 +47,21 @@ function closeHttp(done) {
   done();
 }
 
+// System
+
+const systemProject = ts.createProject('tsconfig.json', { typescript: typescript });
+
+function buildSystem() {
+  const source = ['{db,null}/**/*.ts', 'typings/main.d.ts'];
+  const result = gulp.src(source).pipe(sourcemaps.init()).pipe(ts(systemProject));
+
+  return result.js.pipe(sourcemaps.write()).pipe(gulp.dest('dist'));
+}
+
+function watchSystem() {
+  gulp.watch('{db}/**/*.ts', gulp.series(buildSystem));
+}
+
 // Server
 
 const serverProject = ts.createProject('app/server/tsconfig.json', { typescript: typescript });
@@ -67,14 +82,14 @@ function watchServer() {
 const socketProject = ts.createProject('app/socket/tsconfig.json', { typescript: typescript });
 
 function buildSocket() {
-  const source = ['{app/socket,lib}/**/*.{ts,tsx}', 'typings/main.d.ts'];
+  const source = ['{app/socket,lib}/**/*.ts', 'typings/main.d.ts'];
   const result = gulp.src(source).pipe(sourcemaps.init()).pipe(preprocess({ context: { SOCKET: true }, includeBase: __dirname })).pipe(ts(socketProject));
 
   return result.js.pipe(sourcemaps.write()).pipe(gulp.dest('dist/socket'));
 }
 
 function watchSocket() {
-  gulp.watch('{app/socket,lib}/**/*.{ts,tsx}', gulp.series(gulp.parallel(buildSocket, closeHttp), startHttp));
+  gulp.watch('{app/socket,lib}/**/*.ts', gulp.series(gulp.parallel(buildSocket, closeHttp), startHttp));
 }
 
 // Client

@@ -11,10 +11,10 @@ import { DataManager } from './data_manager';
 import { SocketManager } from './socket_manager';
 import { uuid } from '../../lib/utils/uuid';
 
-export class TheronQueryObservable<T> extends Observable<TheronSubscriptionAction> {
+export class TheronWatcher<T> extends Observable<TheronSubscriptionAction> {
   private _subscriptionKey: string = uuid();
 
-  constructor(private _socketManager: SocketManager<TheronSubscriptionAction>, private _dataManager: DataManager<any>, private _queryOptions: TheronQueryAction) {
+  constructor(private _socketManager: SocketManager<TheronSubscriptionAction>, private _dataManager: DataManager<any>, private _queryName: string, private _queryOptions: any) {
     super();
   }
 

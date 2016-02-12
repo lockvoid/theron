@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs/Observable';
 
-import { REQUEST_SUCCESS, REQUEST_FAILURE, DISPATCH_QUERY, UPSERT_QUERY, REMOVE_QUERY, QUERY_REMOVED } from '../../lib/constants';
+import { REQUEST_SUCCESS, REQUEST_FAILURE, DISPATCH_QUERY, UPSERT_QUERY, REMOVE_QUERY } from '../../lib/constants';
 import { TheronBaseAction, TheronDataAction, TheronQueryAction } from '../../lib/actions';
 import { TheronDispatchable } from '../../lib/dispatchable';
 import { TheronWatcher } from './watcher';
