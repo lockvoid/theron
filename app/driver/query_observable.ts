@@ -3,6 +3,8 @@ import { Subscriber } from 'rxjs/Subscriber';
 import { Subscription } from 'rxjs/Subscription';
 import { WebSocketSubject } from 'rxjs/observable/dom/webSocket';
 
+import 'rxjs/add/operator/filter';
+
 import { SUBSCRIBE_QUERY, UNSUBSCRIBE_QUERY, QUERY_VALID, QUERY_INVALID } from '../../lib/constants';
 import { TheronSubscriptionAction, TheronQueryAction, TheronDataAction } from '../../lib/actions';
 import { DataManager } from './data_manager';
