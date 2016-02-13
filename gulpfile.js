@@ -7,6 +7,8 @@ const dotenv = require('dotenv');
 const gulp = require('gulp');
 const jspm = require('jspm');
 const precss = require('precss')
+const typescript = require('typescript');
+const babel = require('gulp-babel');
 const cssnano = require('gulp-cssnano');
 const postcss = require('gulp-postcss');
 const preprocess = require('gulp-preprocess');
@@ -14,7 +16,6 @@ const replace = require('gulp-rev-replace');
 const rev = require('gulp-rev');
 const sourcemaps = require('gulp-sourcemaps');
 const ts = require('gulp-typescript');
-const typescript = require('typescript');
 
 dotenv.config({ silent: true });
 
@@ -68,7 +69,7 @@ const serverProject = ts.createProject('app/server/tsconfig.json', { typescript:
 
 function buildServer() {
   const source = ['{app/server,lib}/**/*.{ts,tsx}', 'typings/main.d.ts'];
-  const result = gulp.src(source).pipe(sourcemaps.init()).pipe(preprocess({ context: { SERVER: true }, includeBase: __dirname })).pipe(ts(serverProject));
+  const result = gulp.src(source).pipe(sourcemaps.init()).pipe(preprocess({ context: { NODE: true }, includeBase: __dirname })).pipe(ts(serverProject));
 
   return result.js.pipe(sourcemaps.write()).pipe(gulp.dest('dist/server'));
 }
@@ -83,7 +84,7 @@ const socketProject = ts.createProject('app/socket/tsconfig.json', { typescript:
 
 function buildSocket() {
   const source = ['{app/socket,lib}/**/*.ts', 'typings/main.d.ts'];
-  const result = gulp.src(source).pipe(sourcemaps.init()).pipe(preprocess({ context: { SOCKET: true }, includeBase: __dirname })).pipe(ts(socketProject));
+  const result = gulp.src(source).pipe(sourcemaps.init()).pipe(preprocess({ context: { NODE: true }, includeBase: __dirname })).pipe(ts(socketProject));
 
   return result.js.pipe(sourcemaps.write()).pipe(gulp.dest('dist/socket'));
 }
@@ -98,9 +99,9 @@ const clientProject = ts.createProject('app/client/tsconfig.json', { typescript:
 
 function buildClient() {
   const source = ['{app/client,lib}/**/*.{ts,tsx}', 'node_modules/typescript/lib/lib.es6.d.ts', 'typings/browser.d.ts'];
-  const result = gulp.src(source).pipe(sourcemaps.init()).pipe(preprocess({ context: { CLIENT: true }, includeBase: __dirname })).pipe(ts(clientProject));
+  const result = gulp.src(source).pipe(sourcemaps.init()).pipe(preprocess({ includeBase: __dirname })).pipe(ts(clientProject));
 
-  return result.js.pipe(sourcemaps.write()).pipe(gulp.dest('dist/client'));
+  return result.js.pipe(babel({ presets: ['es2015'] })).pipe(sourcemaps.write()).pipe(gulp.dest('dist/client'));
 }
 
 function watchClient() {
@@ -113,9 +114,9 @@ const driverProject = ts.createProject('app/driver/tsconfig.json', { typescript:
 
 function buildDriver() {
   const source = ['{app/driver,lib,test/playground}/**/*.{ts,tsx}', 'node_modules/typescript/lib/lib.es6.d.ts', 'typings/browser.d.ts'];
-  const result = gulp.src(source).pipe(sourcemaps.init()).pipe(preprocess({ context: { DRIVER: true }, includeBase: __dirname })).pipe(ts(driverProject));
+  const result = gulp.src(source).pipe(sourcemaps.init()).pipe(preprocess({ includeBase: __dirname })).pipe(ts(driverProject));
 
-  return result.js.pipe(sourcemaps.write()).pipe(gulp.dest('dist/driver'));
+  return result.js.pipe(babel({ presets: ['es2015'] })).pipe(sourcemaps.write()).pipe(gulp.dest('dist/driver'));
 }
 
 function watchDriver() {

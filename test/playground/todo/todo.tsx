@@ -2,12 +2,14 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
 import { Reducer, combineReducers, applyMiddleware, createStore } from 'redux';
+import { take, put, call, fork } from 'redux-saga'
 import { Provider, MapStateToProps, MapDispatchToPropsFunction, connect } from 'react-redux';
 import { List } from 'immutable';
 import { Subscription } from 'rxjs/Subscription';
 
 import { Theron } from '../../../app/driver/driver';
-import { TheronQueryObservable } from '../../../app/driver/query_observable';
+
+// Sagas
 
 // Records
 
@@ -40,9 +42,11 @@ const todos: Reducer = (state: List<TodoRecord> = List([{ name: 'Go shopping...'
   }
 }
 
+const store = createStore(combineReducers({ theron, todos }));
+
 // Actions
 
-const connectTheron = (url: string, options: { app: string }) => {
+const connectTheron = (url: string, options: { app: string, secret?: string }) => {
   return { type: CONNECT_THERON, url, options };
 }
 
@@ -74,10 +78,19 @@ const mapDispatchToProps: MapDispatchToPropsFunction = (dispatch) => {
 class TodoApp extends React.Component<any, any> {
   private _todos: Subscription;
 
-  componentWillMount() {
+  async componentWillMount() {
     const { theron } = this.props;
 
-    this._todos = theron.query({}).subscribe(value => {
+    await theron.upsertQuery('LIST_TODOS', (sql) => {
+      return '1';
+    }).toPromise();
+
+    // theron.removeQuery('LIST_TODOS');
+   // , (sql) => {
+   //   return '1';
+   // });
+
+    this._todos = theron.watch('LIST_TODOS').subscribe(value => {
       console.log(value);
     });
   }
@@ -87,8 +100,10 @@ class TodoApp extends React.Component<any, any> {
   }
 
   addTodo(event) {
+    let { onEnterPress } = this.props;
+
     if (event.keyCode === 13) {
-      this.props.onEnterPress(event.target.value);
+      onEnterPress(event.target.value);
       event.target.value = null;
     }
   }
@@ -108,14 +123,12 @@ class TodoApp extends React.Component<any, any> {
   }
 }
 
-const store = createStore(combineReducers({ theron, todos }));
+store.dispatch(connectTheron('ws://0.0.0.0:9090/echo', { app: 'todos', secret: '12345' }));
 
-store.dispatch(connectTheron('ws://0.0.0.0:9090/echo', { app: 'todos' }));
-
-const bootstrap = (
+const app = (
   <Provider store={store}>
     <TodoApp />
   </Provider>
 );
 
-ReactDOM.render(bootstrap, document.getElementById('app'));
+ReactDOM.render(app, document.getElementById('app'));

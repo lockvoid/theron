@@ -9,6 +9,7 @@ System.config({
 
   map: {
     "babel": "npm:babel-core@5.8.35",
+    "babel-polyfill": "npm:babel-polyfill@6.5.0",
     "babel-runtime": "npm:babel-runtime@5.8.35",
     "core-js": "npm:core-js@1.2.6",
     "immutable": "npm:immutable@3.7.6",
@@ -43,6 +44,15 @@ System.config({
     },
     "npm:assert@1.3.0": {
       "util": "npm:util@0.10.3"
+    },
+    "npm:babel-polyfill@6.5.0": {
+      "babel-regenerator-runtime": "npm:babel-regenerator-runtime@6.5.0",
+      "babel-runtime": "npm:babel-runtime@5.8.35",
+      "core-js": "npm:core-js@1.2.6",
+      "process": "github:jspm/nodelibs-process@0.1.2"
+    },
+    "npm:babel-regenerator-runtime@6.5.0": {
+      "process": "github:jspm/nodelibs-process@0.1.2"
     },
     "npm:babel-runtime@5.8.35": {
       "process": "github:jspm/nodelibs-process@0.1.2"
