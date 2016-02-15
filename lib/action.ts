@@ -1,3 +1,7 @@
+export interface TheronAction {
+  type: string;
+}
+
 export interface TheronBaseAction {
   type: string;
 }

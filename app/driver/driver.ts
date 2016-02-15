@@ -1,38 +1,56 @@
 import { Observable } from 'rxjs/Observable';
+import { BehaviorSubject } from 'rxjs/subject/BehaviorSubject';
 
 import { REQUEST_SUCCESS, REQUEST_FAILURE, DISPATCH_QUERY, UPSERT_QUERY, REMOVE_QUERY } from '../../lib/constants';
-import { TheronBaseAction, TheronDataAction, TheronQueryAction } from '../../lib/actions';
-import { TheronDispatchable } from '../../lib/dispatchable';
-import { TheronWatcher } from './watcher';
-import { DataManager } from './data_manager';
-import { SocketManager } from './socket_manager';
+import { TheronAction } from '../../lib/action';
+import { TheronOptions } from '../../lib/options';
+import { TheronExecutable } from '../../lib/executable';
+import { RescueWebSocketSubject } from '../../lib/websocket';
 import { uuid } from '../../lib/utils/uuid';
 
-import * as qs from 'qs';
-
-import 'rxjs/add/operator/toPromise';
-
-export interface TheronOptions {
-  app: string;
-  secret?: string;
-}
-
-export class Theron {
-  protected _dataManager = new DataManager<TheronDataAction<any>>();
-  protected _socketManager: SocketManager<any>;
+export class Theron extends RescueWebSocketSubject<TheronAction> {
+  protected _auth: BehaviorSubject<any>;
 
   constructor(url: string, options: TheronOptions) {
-    this._socketManager = new SocketManager(this._constructUrl(url, options));
-    this._socketManager.subscribe(this._processAction.bind(this), this._reconnect.bind(this));
+    super(url);
   }
 
+  authWithToken(token: string): Observable<any> {
+    return null;
+  }
+
+  authWithPassword(email: string, password: string): Observable<any> {
+    return null;
+  }
+
+  get auth(): BehaviorSubject<any> {
+    return this._auth;
+  }
+
+  upsertQuery(name: string, executable: TheronExecutable): Observable<any> {
+    return null;
+  }
+
+  removeQuery(name: string): Observable<any> {
+    return null;
+  }
+
+  dispatch(name: string, params?: any): Observable<any> {
+    return null;
+  }
+
+  watch<T>(name: string, params?: any): Observable<T> {
+    return null;
+  }
+
+  /*
   upsertQuery(name: string, dispatchable: TheronDispatchable): Observable<any> {
     setTimeout(() => {
-      this._socketManager.next({ type: UPSERT_QUERY, name, dispatchable: dispatchable.toString() });
+      this._socket.next({ type: UPSERT_QUERY, name, dispatchable: dispatchable.toString() });
     });
 
     return new Observable(observer => {
-      let subscription = this._socketManager.filter(action => action.origin === UPSERT_QUERY && action.name === name).subscribe(action => {
+      let subscription = this._socket.filter(action => action.origin === UPSERT_QUERY && action.name === name).subscribe(action => {
         switch (action.type) {
           case REQUEST_SUCCESS:
             return observer.complete();
@@ -49,11 +67,11 @@ export class Theron {
 
   removeQuery(name: string): Observable<any> {
     setTimeout(() => {
-      this._socketManager.next({ type: REMOVE_QUERY, name });
+      this._socket.next({ type: REMOVE_QUERY, name });
     });
 
     return new Observable(observer => {
-      let subscription = this._socketManager.filter(action => action.origin === REMOVE_QUERY && action.name === name).subscribe(action => {
+      let subscription = this._socket.filter(action => action.origin === REMOVE_QUERY && action.name === name).subscribe(action => {
         switch (action.type) {
           case REQUEST_SUCCESS:
             return observer.complete();
@@ -72,11 +90,11 @@ export class Theron {
     const requestId = uuid();
 
     setTimeout(() => {
-      this._socketManager.next({ type: DISPATCH_QUERY, requestId, name, params });
+      this._socket.next({ type: DISPATCH_QUERY, requestId, name, params });
     });
 
     return new Observable(observer => {
-      let subscription = this._socketManager.filter(action => action.origin === DISPATCH_QUERY && action.requestId === requestId).subscribe(action => {
+      let subscription = this._socket.filter(action => action.origin === DISPATCH_QUERY && action.requestId === requestId).subscribe(action => {
         switch (action.type) {
           case REQUEST_SUCCESS:
             return observer.complete();
@@ -91,9 +109,6 @@ export class Theron {
     });
   }
 
-  watch<T>(queryName: string, queryParams?: any): TheronWatcher<T> {
-    return new TheronWatcher(this._socketManager, this._dataManager, queryName, queryParams);
-  }
 
   protected _processAction(action) {
     this._dataManager.next(action);
@@ -101,8 +116,5 @@ export class Theron {
 
   protected _reconnect(err) {
   }
-
-  protected _constructUrl(url: string, options: TheronOptions): string {
-    return [url, qs.stringify(options)].join('?');
-  }
+  */
 }
