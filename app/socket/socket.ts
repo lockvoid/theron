@@ -1,6 +1,7 @@
-import * as ws from 'ws';
 import * as pg from 'pg';
 import * as sql from 'sql-bricks-postgres';
+
+import { Server as WebSocketServer } from 'ws';
 
 import { Subject } from 'rxjs/Subject';
 import { ReplaySubject } from 'rxjs/subject/ReplaySubject';
@@ -9,18 +10,38 @@ import { Subscriber } from 'rxjs/Subscriber';
 import { REQUEST_SUCCESS, REQUEST_FAILURE,DISPATCH_QUERY, PARSE_ERROR, UPSERT_QUERY, REMOVE_QUERY, SUBSCRIBE_QUERY, UNSUBSCRIBE_QUERY, QUERY_VALID, QUERY_INVALID } from '../../lib/constants';
 import { TheronAction } from '../../lib/action';
 import { verifyClient } from './utils/verify_client';
+import { Router } from './router';
 
 export const app = (httpServer) => {
-  const wsServer = new ws.Server({ server: httpServer, path: '/echo', verifyClient });
+  const socketServer = new WebSocketServer({ server: httpServer, path: '/echo', verifyClient });
 
-  wsServer.on('connection', ws => {
-    let { appId, appName, appAdmin, db, dbClose } = <{ appId: number, appName: string, appAdmin: boolean, db: pg.Client, dbClose: Function }>(<any>ws.upgradeReq);
+  socketServer.on('connection', socket => {
+    const router = new Router(socket);
+
+    router.subscribe(
+      message => {
+        console.log(message);
+        router.next(message);
+      },
+
+      error => {
+        console.log(error.code);
+      },
+
+      () => {
+        console.log('done');
+      }
+    );
+
+    // let { appId, appName, appAdmin, db, dbClose } = <{ appId: number, appName: string, appAdmin: boolean, db: pg.Client, dbClose: Function }>(<any>ws.upgradeReq);
 
     db.on('notification', message => {
       console.log(message);
     });
 
     db.query('LISTEN watchers');
+
+    /*
 
     ws.on('close', () => {
       dbClose();
@@ -52,7 +73,7 @@ export const app = (httpServer) => {
       } else {
 
       }
-    });
+    }); */
   });
 }
 

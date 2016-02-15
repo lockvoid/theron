@@ -13,6 +13,15 @@ export class Theron extends RescueWebSocketSubject<TheronAction> {
 
   constructor(url: string, options: TheronOptions) {
     super(url);
+    this.subscribe(
+      message => {
+        console.log(message);
+      },
+
+      error => {
+        console.log(error);
+      }
+    );
   }
 
   authWithToken(token: string): Observable<any> {

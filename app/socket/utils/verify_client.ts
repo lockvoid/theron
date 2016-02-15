@@ -4,6 +4,8 @@ import * as url from 'url';
 import * as sql from 'sql-bricks-postgres';
 
 export const verifyClient = async ({ origin, req, secure }, valid) => {
+  return valid(true);
+
   let { app, secret } = qs.parse(url.parse(req.url).query);
 
   pg.connect(process.env['POSTGRES_URL'] || 'error', (err, appConnection, closeConnection) => {

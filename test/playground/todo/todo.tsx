@@ -81,18 +81,20 @@ class TodoApp extends React.Component<any, any> {
   async componentWillMount() {
     const { theron } = this.props;
 
-    await theron.upsertQuery('LIST_TODOS', (sql) => {
-      return '1';
-    }).toPromise();
+    theron.next({ test: 'hello, world' });
 
-    // theron.removeQuery('LIST_TODOS');
-   // , (sql) => {
-   //   return '1';
-   // });
+    // await theron.upsertQuery('LIST_TODOS', (sql) => {
+    //   return '1';
+    // }).toPromise();
 
-    this._todos = theron.watch('LIST_TODOS').subscribe(value => {
-      console.log(value);
-    });
+    // // theron.removeQuery('LIST_TODOS');
+   /// / , (sql) => {
+   /// /   return '1';
+   /// / });
+
+    // this._todos = theron.watch('LIST_TODOS').subscribe(value => {
+    //   console.log(value);
+    // });
   }
 
   componentWillUnmount() {
