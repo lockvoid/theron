@@ -21,7 +21,6 @@ export const app = (httpServer) => {
     router.subscribe(
       message => {
         console.log(message);
-        router.next(message);
       },
 
       error => {

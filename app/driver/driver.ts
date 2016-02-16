@@ -1,18 +1,20 @@
-import { Observable } from 'rxjs/Observable';
 import { BehaviorSubject } from 'rxjs/subject/BehaviorSubject';
+import { Observable } from 'rxjs/Observable';
+import { Observer } from 'rxjs/Observer';
 
+import { TheronAction, TheronRequest } from '../../lib/action';
 import { REQUEST_SUCCESS, REQUEST_FAILURE, DISPATCH_QUERY, UPSERT_QUERY, REMOVE_QUERY } from '../../lib/constants';
-import { TheronAction } from '../../lib/action';
-import { TheronOptions } from '../../lib/options';
 import { TheronExecutable } from '../../lib/executable';
-import { RescueWebSocketSubject } from '../../lib/websocket';
+import { TheronOptions } from '../../lib/options';
 import { uuid } from '../../lib/utils/uuid';
+import { RescueWebSocketSubject } from '../../lib/websocket';
 
-export class Theron extends RescueWebSocketSubject<TheronAction> {
+export class Theron extends RescueWebSocketSubject<TheronRequest<any>> {
   protected _auth: BehaviorSubject<any>;
 
   constructor(url: string, options: TheronOptions) {
     super(url);
+
     this.subscribe(
       message => {
         console.log(message);
@@ -37,36 +39,46 @@ export class Theron extends RescueWebSocketSubject<TheronAction> {
   }
 
   upsertQuery(name: string, executable: TheronExecutable): Observable<any> {
-    return null;
+    return this._request({ type: UPSERT_QUERY, payload: { name, executable: executable.toString() } });
   }
 
   removeQuery(name: string): Observable<any> {
-    return null;
+    return this._request({ type: REMOVE_QUERY, payload: { name } });
   }
 
   dispatch(name: string, params?: any): Observable<any> {
-    return null;
+    return this._request({ type: DISPATCH_QUERY, payload: { name, params } });
   }
 
   watch<T>(name: string, params?: any): Observable<T> {
     return null;
   }
 
-  /*
-  upsertQuery(name: string, dispatchable: TheronDispatchable): Observable<any> {
-    setTimeout(() => {
-      this._socket.next({ type: UPSERT_QUERY, name, dispatchable: dispatchable.toString() });
-    });
+  protected _request<T>(action: TheronAction<T>): Observable<TheronRequest<T>> {
+    let request = this._constructRequest(action);
 
     return new Observable(observer => {
-      let subscription = this._socket.filter(action => action.origin === UPSERT_QUERY && action.name === name).subscribe(action => {
-        switch (action.type) {
-          case REQUEST_SUCCESS:
-            return observer.complete();
-          case REQUEST_FAILURE:
-            return observer.error(action.reason);
+      let subscription = this.multiplex(() => request, null, message => message.id === request.id).subscribe(
+        message => {
+          switch (message.type) {
+            case REQUEST_SUCCESS:
+              observer.next(message); observer.complete();
+              break;
+
+            case REQUEST_FAILURE:
+              observer.error(message);
+              break;
+          }
+        },
+
+        error => {
+          observer.error(error);
+        },
+
+        () => {
+          observer.error('Request was suspended');
         }
-      });
+      );
 
       return () => {
         subscription.unsubscribe();
@@ -74,56 +86,7 @@ export class Theron extends RescueWebSocketSubject<TheronAction> {
     });
   }
 
-  removeQuery(name: string): Observable<any> {
-    setTimeout(() => {
-      this._socket.next({ type: REMOVE_QUERY, name });
-    });
-
-    return new Observable(observer => {
-      let subscription = this._socket.filter(action => action.origin === REMOVE_QUERY && action.name === name).subscribe(action => {
-        switch (action.type) {
-          case REQUEST_SUCCESS:
-            return observer.complete();
-          case REQUEST_FAILURE:
-            return observer.error(action.reason);
-        }
-      });
-
-      return () => {
-        subscription.unsubscribe();
-      }
-    });
+  protected _constructRequest<T>(action: TheronAction<T>): TheronRequest<T> {
+    return Object.assign({}, action, { id: uuid() });
   }
-
-  dispatch(name: string, params?: any): Observable<any> {
-    const requestId = uuid();
-
-    setTimeout(() => {
-      this._socket.next({ type: DISPATCH_QUERY, requestId, name, params });
-    });
-
-    return new Observable(observer => {
-      let subscription = this._socket.filter(action => action.origin === DISPATCH_QUERY && action.requestId === requestId).subscribe(action => {
-        switch (action.type) {
-          case REQUEST_SUCCESS:
-            return observer.complete();
-          case REQUEST_FAILURE:
-            return observer.error(action.reason);
-        }
-      });
-
-      return () => {
-        subscription.unsubscribe();
-      }
-    });
-  }
-
-
-  protected _processAction(action) {
-    this._dataManager.next(action);
-  }
-
-  protected _reconnect(err) {
-  }
-  */
 }

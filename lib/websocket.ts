@@ -6,6 +6,9 @@ import { Subject } from 'rxjs/Subject';
 import { Subscriber } from 'rxjs/Subscriber';
 import { Subscription } from 'rxjs/Subscription';
 
+import 'rxjs/add/operator/filter';
+import 'rxjs/add/operator/map';
+
 /* @ifdef NODE */
 
 import * as WebSocket from 'ws';
@@ -43,14 +46,41 @@ export class WebSocketSubject<T> extends Subject<T> {
     }
   }
 
+  /*
   lift<R>(operator: Operator<T, R>) {
-     const socket: WebSocketSubject<T> = new WebSocketSubject(this, this.destination);
-     socket.operator = <any>operator;
+    const socket: WebSocketSubject<T> = new WebSocketSubject(this, this.destination);
+    socket.operator = <any>operator;
 
-     return socket;
-   }
+    return socket;
+  }
+  */
 
-   protected _subscribe(subscriber: Subscriber<T>): Subscription | Function | void {
+  multiplex(subscribeMessage: () => T, unsubscribeMessage: () => T, messageFilter: (value: T) => boolean): Observable<T> {
+    return new Observable(observer => {
+      subscribeMessage && this.next(subscribeMessage());
+
+      let subscription = this.filter(messageFilter).subscribe(
+        message => {
+          observer.next(message);
+        },
+
+        error => {
+          observer.error(error);
+        },
+
+        () => {
+          observer.complete();
+        }
+      );
+
+      return () => {
+        unsubscribeMessage && this.next(unsubscribeMessage());
+        subscription.unsubscribe();
+      };
+    });
+  }
+
+  protected _subscribe(subscriber: Subscriber<T>): Subscription | Function | void {
     if (!this.observers) {
       this.observers = [];
     }
@@ -62,6 +92,7 @@ export class WebSocketSubject<T> extends Subject<T> {
     }
 
     if (!this._socket) {
+      console.log('sc');
       this._socket = this._constructWebSocket(this._config);
 
       switch (this._socket.readyState) {
@@ -154,7 +185,9 @@ export class WebSocketSubject<T> extends Subject<T> {
         this._socket.close(error.code, error.reason);
       },
 
-      this._socket.close
+      () => {
+        this._socket.close();
+      }
     );
 
     if (queue && queue instanceof ReplaySubject) {
