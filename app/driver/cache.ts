@@ -1,3 +1,4 @@
+/*
 import { Map } from 'immutable';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
@@ -49,3 +50,4 @@ export class Cache extends Subject<TheronRequest<any>> {
     return super._subscribe(subscriber);
   }
 }
+*/

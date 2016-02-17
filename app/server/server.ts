@@ -2,7 +2,6 @@
 
 import * as express from 'express';
 import * as pg from 'pg';
-const sql = require('sql-bricks-postgres');
 
 export const app = express();
 
@@ -15,15 +14,15 @@ export const app = express();
 CREATE OR REPLACE FUNCTION theron_notify_trigger() RETURNS trigger AS $$ BEGIN
   CASE TG_OP
   WHEN 'DELETE' THEN
-    PERFORM pg_notify('THERON_WATCHERS', TG_OP || ',' || TG_TABLE_NAME || ',' || OLD.id);
+    PERFORM pg_notify('theron_watchers', TG_OP || ',' || TG_TABLE_NAME || ',' || OLD.id);
   ELSE
-    PERFORM pg_notify('THERON_WATCHERS', TG_OP || ',' || TG_TABLE_NAME || ',' || NEW.id);
+    PERFORM pg_notify('theron_watchers', TG_OP || ',' || TG_TABLE_NAME || ',' || NEW.id);
   END CASE;
 
   RETURN NULL;
 END;
 
-$$ LANGUAGE PLpgSQL;
+$$ LANGUAGE plpgsql;
 
 // create triggers
 
@@ -46,17 +45,17 @@ FOR EACH ROW EXECUTE PROCEDURE notify_trigger();
 
 */
 
-pg.connect('postgres://localhost/triggers', (err, connection, done) => {
-  if (err) {
-    return console.log(err);
-  }
-
-  connection.on('notification', message => {
-    console.log(message);
-  });
-
-  connection.query('LISTEN watchers');
-});
+// pg.connect('postgres://localhost/triggers', (err, connection, done) => {
+//   if (err) {
+//     return console.log(err);
+//   }
+//
+//   connection.on('notification', message => {
+//     console.log(message);
+//   });
+//
+//   connection.query('LISTEN watchers');
+// });
 
 //   try {
 //     const db = pg('postgres://localhost/triggers')
@@ -105,14 +104,13 @@ if (app.get('env') === 'development') {
   app.use('/', express.static('./dist/client'));
   app.use('/', express.static('./dist/driver'));
 
-  // Serve playground
+  // Serve tests
 
   app.use('/playground', express.static('./dist/driver/test/playground'));
   app.use('/playground', express.static('./test/playground'));
 
   // Serve packages
 
-  app.use('/node_modules', express.static('./node_modules'));
   app.use('/jspm_packages', express.static('./jspm_packages'));
 
   app.get('/config.js', (req, res) => {

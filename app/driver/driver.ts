@@ -1,35 +1,17 @@
-import { BehaviorSubject } from 'rxjs/subject/BehaviorSubject';
 import { Observable } from 'rxjs/Observable';
-import { Observer } from 'rxjs/Observer';
 
-import { Cache } from './cache';
-import { TheronAction, TheronRequest } from '../../lib/action';
-import { TheronExecutable } from '../../lib/executable';
-import { TheronOptions } from '../../lib/options';
+import { SUBSCRIBE_QUERY, UNSUBSCRIBE_QUERY, REQUEST_SUCCESS, REQUEST_FAILURE, ROW_ADDED, ROW_CHANGED, ROW_MOVED, ROW_REMOVED } from '../../lib/constants';
+import { TheronOptions, TheronAuthOptions } from '../../lib/options';
 import { uuid } from '../../lib/utils/uuid';
 import { RescueWebSocketSubject } from '../../lib/websocket';
 
-import {
-  REQUEST_SUCCESS,
-  REQUEST_FAILURE,
-  DISPATCH_QUERY,
-  UPSERT_QUERY,
-  REMOVE_QUERY,
-  SUBSCRIBE_QUERY,
-  UNSUBSCRIBE_QUERY,
-  ROW_ADDED,
-  ROW_UPDATED,
-  ROW_REMOVED
-} from '../../lib/constants';
-
-export class Theron extends RescueWebSocketSubject<TheronRequest<any>> {
-  protected _auth: BehaviorSubject<any>;
-  protected _cache: Cache = new Cache();
+export class Theron extends RescueWebSocketSubject<any> {
+  protected _auth: TheronAuthOptions;
 
   constructor(url: string, options: TheronOptions) {
-    super(url);
+    super(`${url}?app=${options.app}`);
 
-    this.subscribe(this._cache);
+    this._auth = options.auth;
 
     this.subscribe(
       message => {
@@ -42,97 +24,89 @@ export class Theron extends RescueWebSocketSubject<TheronRequest<any>> {
     );
   }
 
-  authWithToken(token: string): Observable<any> {
+  watch<T>(endpoint: string, params?: any): Observable<T> {
     return null;
   }
 
-  authWithPassword(email: string, password: string): Observable<any> {
-    return null;
-  }
+  // upsertQuery(name: string, executable: TheronExecutable): Observable<any> {
+  //   return this._request({ type: UPSERT_QUERY, payload: { name, executable: executable.toString() } });
+  // }
 
-  get auth(): BehaviorSubject<any> {
-    return this._auth;
-  }
+  // removeQuery(name: string): Observable<any> {
+  //   return this._request({ type: REMOVE_QUERY, payload: { name } });
+  // }
 
-  upsertQuery(name: string, executable: TheronExecutable): Observable<any> {
-    return this._request({ type: UPSERT_QUERY, payload: { name, executable: executable.toString() } });
-  }
+  // dispatch(name: string, params?: any): Observable<any> {
+  //   return this._request({ type: DISPATCH_QUERY, payload: { name, params } });
+  // }
 
-  removeQuery(name: string): Observable<any> {
-    return this._request({ type: REMOVE_QUERY, payload: { name } });
-  }
+  // watch<T>(name: string, params?: any): Observable<T> {
+  //   return new Observable(observer => {
+  //     let subscribeMessage = this._constructRequest({ type: SUBSCRIBE_QUERY, payload: { name, params } });
+  //     let unsubscribeMessage = this._constructRequest({ type: UNSUBSCRIBE_QUERY, payload: { name, params } });
 
-  dispatch(name: string, params?: any): Observable<any> {
-    return this._request({ type: DISPATCH_QUERY, payload: { name, params } });
-  }
+  //     let subscription = this.multiplex(() => subscribeMessage, () => unsubscribeMessage, message => message.id === subscribeMessage.id).subscribe(
+  //       message => {
+  //         switch (message.type) {
+  //           case REQUEST_SUCCESS:
+  //             observer.next(message);
+////               this._cache.filter(action => action.id = message.payload.queryId).subscribe(observer);
+  //             break;
 
-  watch<T>(name: string, params?: any): Observable<T> {
-    return new Observable(observer => {
-      let subscribeMessage = this._constructRequest({ type: SUBSCRIBE_QUERY, payload: { name, params } });
-      let unsubscribeMessage = this._constructRequest({ type: UNSUBSCRIBE_QUERY, payload: { name, params } });
+  //           case REQUEST_FAILURE:
+  //             observer.error(message);
+  //             break;
+  //         }
+  //       },
 
-      let subscription = this.multiplex(() => subscribeMessage, () => unsubscribeMessage, message => message.id === subscribeMessage.id).subscribe(
-        message => {
-          switch (message.type) {
-            case REQUEST_SUCCESS:
-              observer.next(message);
-              this._cache.filter(action => action.id = message.payload.queryId).subscribe(observer);
-              break;
+  //       error => {
+  //         observer.error(error);
+  //       },
 
-            case REQUEST_FAILURE:
-              observer.error(message);
-              break;
-          }
-        },
+  //       () => {
+  //         observer.error('Request was suspended');
+  //       }
+  //     );
 
-        error => {
-          observer.error(error);
-        },
+  //     return () => {
+  //       subscription.unsubscribe();
+  //     }
+  //   });
+  // }
 
-        () => {
-          observer.error('Request was suspended');
-        }
-      );
+  // protected _request<T>(action: TheronAction<T>): Observable<TheronRequest<T>> {
+  //   let request = this._constructRequest(action);
 
-      return () => {
-        subscription.unsubscribe();
-      }
-    });
-  }
+  //   return new Observable(observer => {
+  //     let subscription = this.multiplex(() => request, null, message => message.id === request.id).subscribe(
+  //       message => {
+  //         switch (message.type) {
+  //           case REQUEST_SUCCESS:
+  //             observer.next(message); observer.complete();
+  //             break;
 
-  protected _request<T>(action: TheronAction<T>): Observable<TheronRequest<T>> {
-    let request = this._constructRequest(action);
+  //           case REQUEST_FAILURE:
+  //             observer.error(message);
+  //             break;
+  //         }
+  //       },
 
-    return new Observable(observer => {
-      let subscription = this.multiplex(() => request, null, message => message.id === request.id).subscribe(
-        message => {
-          switch (message.type) {
-            case REQUEST_SUCCESS:
-              observer.next(message); observer.complete();
-              break;
+  //       error => {
+  //         observer.error(error);
+  //       },
 
-            case REQUEST_FAILURE:
-              observer.error(message);
-              break;
-          }
-        },
+  //       () => {
+  //         observer.error('Request was suspended');
+  //       }
+  //     );
 
-        error => {
-          observer.error(error);
-        },
+  //     return () => {
+  //       subscription.unsubscribe();
+  //     }
+  //   });
+  // }
 
-        () => {
-          observer.error('Request was suspended');
-        }
-      );
-
-      return () => {
-        subscription.unsubscribe();
-      }
-    });
-  }
-
-  protected _constructRequest<T>(action: TheronAction<T>): TheronRequest<T> {
-    return Object.assign({}, action, { id: uuid() });
-  }
+  // protected _constructRequest<T>(action: TheronAction<T>): TheronRequest<T> {
+  //   return Object.assign({}, action, { id: uuid() });
+  // }
 }

@@ -35,7 +35,7 @@ var httpProcess = null;
 
 function startHttp(done) {
   if (!httpProcess) {
-    httpProcess = cprocess.spawn('node', ['--harmony-destructuring', 'bin/web'], { stdio: 'inherit' });
+    httpProcess = cprocess.spawn('node', ['--harmony_destructuring', '--harmony_rest_parameters', 'bin/web'], { stdio: 'inherit' });
   }
 
   done();

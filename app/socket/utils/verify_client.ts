@@ -1,44 +1,33 @@
 import * as pg from 'pg';
 import * as qs from 'qs';
 import * as url from 'url';
-import * as sql from 'sql-bricks-postgres';
+
+import { SQL } from '../../../lib/utils/sql';
 
 export const verifyClient = async ({ origin, req, secure }, valid) => {
-  return valid(true);
+  let name = qs.parse(url.parse(req.url).query).app;
 
-  let { app, secret } = qs.parse(url.parse(req.url).query);
-
-  pg.connect(process.env['POSTGRES_URL'] || 'error', (err, appConnection, closeConnection) => {
+  pg.connect(process.env['POSTGRES_URL'], (err, client, done) => {
     if (err) {
-      return valid(false, 500, 'Theron internal error')
+      return valid(false, 500, err.toString());
     }
 
-    appConnection.query(sql.select('id, db').from('apps').where(secret ? { name: app, secret } : { name: app }).toString(), (err, res) => {
-      if (err) {
-        valid(false, 500, 'Theron internal error');
-        return closeConnection();
+    client.query(SQL`SELECT db FROM apps WHERE name=${name} LIMIT 1`, (err, result) => {
+      done();
+
+      if (result.rowCount === 0) {
+        return valid(false, 404);
       }
 
-      if (!res.rows.length) {
-        valid(false, 404, `App doesn't exist`);
-        return closeConnection();
-      }
+      let app = result.rows[0];
 
-      const { id, name, db } = res.rows[0];
-
-      pg.connect(db || 'error', (err, clientConnection, clientClose) => {
+      pg.connect(app.db, (err, client) => {
         if (err) {
-          valid(false, 403, err.toString());
-          return closeConnection();
+          return valid(false, 500, err.toString());
         }
 
-        req.db = clientConnection;
-        req.appId = id;
-        req.appName = name;
-        req.appAdmin = !!secret;
-        req.dbClose = clientClose;
+        Object.assign(req, { app, client });
 
-        closeConnection();
         valid(true);
       });
     });
