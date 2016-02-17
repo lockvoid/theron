@@ -20,11 +20,11 @@ export const app = (httpServer) => {
 
     router.subscribe(
       message => {
-        console.log(message);
+        console.log(`Message: ${JSON.stringify(message)}`);
       },
 
       error => {
-        console.log(error.code);
+        console.log(`Error: ${JSON.stringify(error.code)}`);
       },
 
       () => {
@@ -34,11 +34,11 @@ export const app = (httpServer) => {
 
     // let { appId, appName, appAdmin, db, dbClose } = <{ appId: number, appName: string, appAdmin: boolean, db: pg.Client, dbClose: Function }>(<any>ws.upgradeReq);
 
-    db.on('notification', message => {
-      console.log(message);
-    });
+    // db.on('notification', message => {
+    //   console.log(message);
+    // });
 
-    db.query('LISTEN watchers');
+    // db.query('LISTEN watchers');
 
     /*
 

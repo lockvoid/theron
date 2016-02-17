@@ -92,7 +92,6 @@ export class WebSocketSubject<T> extends Subject<T> {
     }
 
     if (!this._socket) {
-      console.log('sc');
       this._socket = this._constructWebSocket(this._config);
 
       switch (this._socket.readyState) {
