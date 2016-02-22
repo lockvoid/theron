@@ -2,6 +2,8 @@
 
 import * as express from 'express';
 import * as pg from 'pg';
+import * as React from 'react';
+import * as ReactDOM from 'react-dom/server';
 
 export const app = express();
 
@@ -92,6 +94,26 @@ FOR EACH ROW EXECUTE PROCEDURE notify_trigger();
 //  });
 //});
 
+// Configure views
+
+
+app.engine('js', (filename: string, options: any, done: Function) => {
+  var markup = '<!DOCTYPE html>';
+
+  try {
+    let component = require(filename).default;
+
+    markup += ReactDOM.renderToStaticMarkup(React.createElement(component, options));
+  } catch (e) {
+    return done(e);
+  }
+
+  done(null, markup);
+});
+
+app.set('views', `${__dirname}/views`);
+app.set('view engine', 'js');
+
 // Serve assets
 
 app.use('/assets', express.static('./dist/public'));
@@ -110,6 +132,8 @@ if (app.get('env') === 'development') {
   });
 }
 
-app.get('/', (req, res) => {
-  res.send('hello, world!');
+// Render pages
+
+app.get('/*', (req, res) => {
+  res.render('app');
 });
