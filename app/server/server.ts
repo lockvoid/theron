@@ -7,6 +7,14 @@ import * as ReactDOM from 'react-dom/server';
 
 export const app = express();
 
+import { UserRecord } from './models/user';
+
+
+//UserRecord.where('id', 1).fetch().then(function(user) {
+//
+//  console.log(user);
+//
+//});
 // TEST
 
 /*

@@ -1,5 +1,5 @@
-import * as pg from 'pg';
 import * as ws from 'ws';
+import * as knex from 'knex';
 
 import { Router } from './router';
 import { verifyClient } from './utils/verify_client';
@@ -7,14 +7,8 @@ import { verifyClient } from './utils/verify_client';
 export const app = (httpServer) => {
   const socketServer = new ws.Server({ server: httpServer, path: '/echo', verifyClient });
 
-  socketServer.on('connection', socket => {
-    let { client } = <{ client: pg.Client }>(<any>socket.upgradeReq);
-
-    client.on('notification', message => {
-      console.log(message);
-    });
-
-    client.query('LISTEN theron_watchers');
+  socketServer.on('connection', (socket) => {
+    let { db } = <{ db: knex }>(<any>socket.upgradeReq);
 
     const router = new Router(socket);
 
@@ -24,13 +18,13 @@ export const app = (httpServer) => {
       },
 
       error => {
-        client.query('UNLISTEN theron_watchers');
-        client.end();
+        db.raw('UNLISTEN theton_watchers');
+        db.destroy();
       },
 
       () => {
-        client.query('UNLISTEN theron_watchers');
-        client.end();
+        db.raw('UNLISTEN theton_watchers');
+        db.destroy();
       }
     );
   });
