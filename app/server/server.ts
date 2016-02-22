@@ -102,14 +102,6 @@ app.use((req, res, next) => {
 
 if (app.get('env') === 'development') {
   app.use('/', express.static('./dist/client'));
-  app.use('/', express.static('./dist/driver'));
-
-  // Serve tests
-
-  app.use('/playground', express.static('./dist/driver/test/playground'));
-  app.use('/playground', express.static('./test/playground'));
-
-  // Serve packages
 
   app.use('/jspm_packages', express.static('./jspm_packages'));
 

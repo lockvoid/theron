@@ -5,7 +5,7 @@ const http = require('http');
 // Import internal modules
 
 const server = require('../dist/server/app/server/server');
-const socket = require('../dist/socket/app/socket/socket');
+const socket = require('../dist/server/app/server/socket');
 
 // Bootstrap internal services
 

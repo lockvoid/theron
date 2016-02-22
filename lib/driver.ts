@@ -1,9 +1,9 @@
 import { Observable } from 'rxjs/Observable';
 
-import { SUBSCRIBE_QUERY, UNSUBSCRIBE_QUERY, REQUEST_SUCCESS, REQUEST_FAILURE, ROW_ADDED, ROW_CHANGED, ROW_MOVED, ROW_REMOVED } from '../../lib/constants';
-import { TheronOptions, TheronAuthOptions } from '../../lib/options';
-import { uuid } from '../../lib/utils/uuid';
-import { RescueWebSocketSubject } from '../../lib/websocket';
+import { SUBSCRIBE_QUERY, UNSUBSCRIBE_QUERY, REQUEST_SUCCESS, REQUEST_FAILURE, ROW_ADDED, ROW_CHANGED, ROW_MOVED, ROW_REMOVED } from './constants';
+import { TheronOptions, TheronAuthOptions } from './options';
+import { uuid } from './utils/uuid';
+import { RescueWebSocketSubject } from './websocket';
 
 export class Theron extends RescueWebSocketSubject<any> {
   protected _auth: TheronAuthOptions;
