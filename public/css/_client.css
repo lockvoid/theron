@@ -1,0 +1,42 @@
+body.app {
+  height: 100%;
+}
+
+app {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+@keyframes spinner {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+
+  40% {
+    transform: scale(1.0);
+  }
+}
+
+app spinner {
+  display: flex;
+  justify-content: center;
+  margin: auto;
+
+  & > div {
+    @mixin size 6px, 6px;
+    animation: spinner 1.4s infinite ease-in-out both;
+    background-color: $color-theron;
+    border-radius: 100%;
+    margin: 0 1px;
+
+    &:nth-child(1) {
+      animation-delay: -0.32s;
+    }
+
+    &:nth-child(2) {
+      animation-delay: -0.16s;
+    }
+  }
+}
+

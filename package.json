@@ -1,6 +1,6 @@
 {
   "name": "Theron",
-  "description": "Reactive storage for serverless apps",
+  "description": "Reactive storage for modern apps",
   "version": "0.1.0",
   "license": "MIT",
   "homepage": "https://theronapp.com",
@@ -13,14 +13,11 @@
     "immutable": "^3.7.6",
     "jspm": "^0.16.26",
     "pg": "^4.4.4",
-    "pg-promise": "^3.1.6",
     "qs": "^6.1.0",
     "react": "^0.14.7",
     "react-dom": "^0.14.7",
     "rxjs": "^5.0.0-beta.2",
     "serve-static": "^1.10.2",
-    "sql-bricks-postgres": "^0.4.2",
-    "waterline": "^0.11.0",
     "ws": "^1.0.1"
   },
   "devDependencies": {
@@ -53,6 +50,8 @@
       "react": "npm:react@^0.14.7",
       "react-dom": "npm:react-dom@^0.14.7",
       "react-redux": "npm:react-redux@^4.2.1",
+      "react-router": "npm:react-router@^2.0.0",
+      "react-router-redux": "npm:react-router-redux@^3.0.0",
       "redux": "npm:redux@^3.2.1",
       "redux-saga": "npm:redux-saga@^0.7.0",
       "redux-thunk": "npm:redux-thunk@^1.0.3",
