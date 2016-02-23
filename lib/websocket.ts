@@ -35,28 +35,15 @@ export class WebSocketSubject<T> extends Subject<T> {
   protected _socket: WebSocket;
   protected _config: string | WebSocket
 
-  constructor(config: string | WebSocket | Observable<T>, destination?: Observer<T>) {
-    if (config instanceof Observable) {
-      super(destination, config);
-    } else {
-      super();
+  constructor(config: string | WebSocket) {
+    super();
 
-      this._config = config;
-      this._cacheOutgoingMessages();
-    }
+    this._config = config;
+    this._cacheOutgoingMessages();
   }
-
-  /*
-  lift<R>(operator: Operator<T, R>) {
-    const socket: WebSocketSubject<T> = new WebSocketSubject(this, this.destination);
-    socket.operator = <any>operator;
-
-    return socket;
-  }
-  */
 
   multiplex(subscribeMessage: () => T, unsubscribeMessage: () => T, messageFilter: (value: T) => boolean): Observable<T> {
-    return new Observable(observer => {
+    return new Observable<T>(observer => {
       subscribeMessage && this.next(subscribeMessage());
 
       let subscription = this.filter(messageFilter).subscribe(

@@ -5,13 +5,12 @@ import { TheronOptions, TheronAuthOptions } from './options';
 import { uuid } from './utils/uuid';
 import { RescueWebSocketSubject } from './websocket';
 
-export class Theron extends RescueWebSocketSubject<any> {
-  protected _auth: TheronAuthOptions;
+import * as qs from 'qs';
+import 'whatwg-fetch';
 
+export class Theron extends RescueWebSocketSubject<any> {
   constructor(url: string, options: TheronOptions) {
     super(`${url}?app=${options.app}`);
-
-    this._auth = options.auth;
 
     this.subscribe(
       message => {
@@ -25,7 +24,62 @@ export class Theron extends RescueWebSocketSubject<any> {
   }
 
   watch<T>(endpoint: string, params?: any): Observable<T> {
-    return null;
+    const checkStatus = (response) => {
+      if (response.status >= 200 && response.status < 300) {
+        return response;
+      }
+
+      const error = new Error(response.statusText);
+      throw error;
+    }
+
+    const parseJson = (response) => {
+      return response.json()
+    }
+
+    return new Observable<T>(observer => {
+      var subscription;
+
+      fetch(`${endpoint}?${qs.stringify(params)}`).then(checkStatus).then(parseJson).then(query => {
+        let subscribeRequest = this._constructRequest({
+          type: SUBSCRIBE_QUERY, payload: query
+        });
+
+        let unsubscribeRequest = this._constructRequest({
+          type: UNSUBSCRIBE_QUERY, payload: query
+        });
+
+        subscription = this.multiplex(() => subscribeRequest, () => unsubscribeRequest, message => message.id === subscribeRequest.id).subscribe(
+          message => {
+            switch (message.type) {
+              case REQUEST_SUCCESS:
+                observer.next(message);
+                break;
+
+              case REQUEST_FAILURE:
+                observer.error(message);
+                break;
+            }
+          },
+
+          error => {
+            observer.error(error);
+          },
+
+          () => {
+            observer.error('Request was suspended');
+          }
+        );
+      }).catch(error => observer.error(error));
+
+      return () => {
+        subscription && subscription.unsubscribe();
+      }
+    });
+  }
+
+  protected _constructRequest(action) {
+    return Object.assign({}, action, { id: uuid() });
   }
 
   // upsertQuery(name: string, executable: TheronExecutable): Observable<any> {
@@ -99,6 +153,7 @@ export class Theron extends RescueWebSocketSubject<any> {
   //         observer.error('Request was suspended');
   //       }
   //     );
+
 
   //     return () => {
   //       subscription.unsubscribe();

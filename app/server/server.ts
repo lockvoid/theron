@@ -8,7 +8,7 @@ import * as ReactDOM from 'react-dom/server';
 export const app = express();
 
 import { UserRecord } from './models/user';
-
+import { api } from './routes/api';
 
 //UserRecord.where('id', 1).fetch().then(function(user) {
 //
@@ -139,6 +139,10 @@ if (app.get('env') === 'development') {
     res.sendFile(`${process.cwd()}/config.js`);
   });
 }
+
+// Mount routes
+
+app.use('/api', api);
 
 // Render pages
 
