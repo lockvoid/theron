@@ -3,7 +3,7 @@ import * as qs from 'qs';
 import * as url from 'url';
 import { Observable } from 'rxjs/Observable';
 
-const pg = require('pg-then');
+const pg = require('pg-promise')();
 
 import { AppRecord } from '../models/app';
 
@@ -21,21 +21,22 @@ export const verifyClient = async ({ origin, req, secure }, valid) => {
       return valid(false, 400, 'Database not specified');
     }
 
-    const db = pg.Pool(app.get('db_url'))
+    const db = pg(app.get('db_url'));
+    await db.query('SELECT 1');
 
     let notifier = new Observable<any>(observer => {
-      const persistent = pg.Client(app.get('db_url'));
+      var persistent = new pg.pg.Client(app.get('db_url'));
 
+      persistent.connect();
       persistent.query('LISTEN theron_watchers');
 
-      persistent._client.on('notification', message => {
+      persistent.on('notification', message => {
         observer.next(message);
       });
 
       return () => {
-        persistent.query('UNLISTEN theron_watchers').then(() => {
-          persistent.end();
-        });
+        persistent.query('UNLISTEN theron_watchers');
+        persistent.end();
       }
     });
 
