@@ -1,4 +1,5 @@
 import * as knex from 'knex';
+import * as pg from 'pg';
 import * as qs from 'qs';
 import * as url from 'url';
 
@@ -17,16 +18,21 @@ export const verifyClient = async ({ origin, req, secure }, valid) => {
       return valid(false, 400, 'Database not specified');
     }
 
-    try {
-      const db = knex({ client: 'pg', connection: app.get('db_url') });
-      await db.raw('LISTEN theron_watchers');
+    pg.connect(app.get('db_url'), (err, db) => {
+      if (err) {
+        return valid(false, 400, err.toString());
+      }
 
-      Object.assign(req, { app: app.attrubutes, db });
+      db.query('LISTEN theron_watchers', (err) => {
+        if (err) {
+          return valid(false, 400, err.toString());
+        }
 
-      valid(true);
-    } catch (error) {
-      valid(false, 400, 'Connection is unreachable');
-    }
+        Object.assign(req, { app: app.attrubutes, db });
+
+        valid(true);
+      });
+    });
   } catch (error) {
     valid(false, 500);
   }

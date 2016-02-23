@@ -45,14 +45,16 @@ export class Theron extends RescueWebSocketSubject<any> {
           type: SUBSCRIBE_QUERY, payload: query
         });
 
-        let unsubscribeRequest = this._constructRequest({
-          type: UNSUBSCRIBE_QUERY, payload: query
-        });
+        let unsubscribeRequest = null;
 
         subscription = this.multiplex(() => subscribeRequest, () => unsubscribeRequest, message => message.id === subscribeRequest.id).subscribe(
           message => {
             switch (message.type) {
               case REQUEST_SUCCESS:
+                unsubscribeRequest = this._constructRequest({
+                  type: UNSUBSCRIBE_QUERY, payload: { queryId: message.payload.queryId }
+                });
+
                 observer.next(message);
                 break;
 
