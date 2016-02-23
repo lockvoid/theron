@@ -1,7 +1,9 @@
 import * as knex from 'knex';
-import * as pg from 'pg';
 import * as qs from 'qs';
 import * as url from 'url';
+import { Observable } from 'rxjs/Observable';
+
+const pg = require('pg-then');
 
 import { AppRecord } from '../models/app';
 
@@ -14,25 +16,32 @@ export const verifyClient = async ({ origin, req, secure }, valid) => {
     if (!app) {
       return valid(false, 404, `App not found`);
     }
+
     if (!app.get('db_url')) {
       return valid(false, 400, 'Database not specified');
     }
 
-    pg.connect(app.get('db_url'), (err, db) => {
-      if (err) {
-        return valid(false, 400, err.toString());
-      }
+    const db = pg.Pool(app.get('db_url'))
 
-      db.query('LISTEN theron_watchers', (err) => {
-        if (err) {
-          return valid(false, 400, err.toString());
-        }
+    let notifier = new Observable<any>(observer => {
+      const persistent = pg.Client(app.get('db_url'));
 
-        Object.assign(req, { app: app.attrubutes, db });
+      persistent.query('LISTEN theron_watchers');
 
-        valid(true);
+      persistent._client.on('notification', message => {
+        observer.next(message);
       });
+
+      return () => {
+        persistent.query('UNLISTEN theron_watchers').then(() => {
+          persistent.end();
+        });
+      }
     });
+
+    Object.assign(req, { app: app.attributes, db, notifier });
+
+    valid(true);
   } catch (error) {
     valid(false, 500);
   }

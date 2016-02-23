@@ -53,8 +53,12 @@ export class Router extends WebSocketSubject<any> {
   protected _queries = Map<string, any>();
   protected _tables = Map<string, any>();
 
-  constructor(socket: WebSocket) {
+  constructor(socket: WebSocket, protected _app, protected _db, protected _notifier) {
     super(socket);
+
+    let notifier = this._notifier.subscribe(message => {
+      console.log(message);
+    });
 
     this.subscribe(
       message => {
@@ -70,10 +74,12 @@ export class Router extends WebSocketSubject<any> {
       },
 
       error => {
+        notifier.unsubscribe();
         this._reset();
       },
 
       () => {
+        notifier.unsubscribe();
         this._reset();
       }
     );
@@ -99,7 +105,7 @@ export class Router extends WebSocketSubject<any> {
         throw `Doesn't affect tables (${queryText})`;
       }
 
-      let queryId = parser.queryId();
+      let queryId = parser.queryId(this._app.db_url);
 
       if (this._queries.has(queryId)) {
         let queryMeta = this._queries.get(queryId);

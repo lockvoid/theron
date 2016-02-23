@@ -4,17 +4,13 @@ import * as pg from 'pg';
 import { Router } from './router';
 import { verifyClient } from './utils/verify_client';
 
-export const app = (httpServer) => {
+export const app = async (httpServer) => {
   const socketServer = new ws.Server({ server: httpServer, path: '/echo', verifyClient });
 
   socketServer.on('connection', (socket) => {
-    let { db } = <{ db: pg.Client }>(<any>socket.upgradeReq);
+    let { db, app, notifier } = <any>socket.upgradeReq;
 
-    db.on('notification', message => {
-      console.log(message);
-    });
-
-    const router = new Router(socket);
+    const router = new Router(socket, app, db, notifier);
 
     router.subscribe(
       message => {
@@ -22,13 +18,9 @@ export const app = (httpServer) => {
       },
 
       error => {
-        db.query('UNLISTEN theron_watchers');
-        db.end();
       },
 
       () => {
-        db.query('UNLISTEN theron_watchers');
-        db.end();
       }
     );
   });

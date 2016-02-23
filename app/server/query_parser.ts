@@ -52,7 +52,7 @@ export class QueryParser {
     return this._parsed.then(query => find(query, []).filter(uniq));
   }
 
-  queryId(): string {
-   return crypto.createHash('sha256').update(this._query).digest('base64');
+  queryId(dbUrl): string {
+    return crypto.createHash('sha256').update(this._query + dbUrl).digest('base64');
   }
 }
