@@ -1,22 +1,40 @@
 import { WebSocketSubject } from '../../lib/websocket';
 import { Map, List } from 'immutable';
 
-import { SUBSCRIBE_QUERY, UNSUBSCRIBE_QUERY, REQUEST_SUCCESS, REQUEST_FAILURE, ROW_ADDED, ROW_CHANGED, ROW_MOVED, ROW_REMOVED } from '../../lib/constants';
+import { SUBSCRIBE_QUERY, UNSUBSCRIBE_QUERY, EXECUTE_QUERY, REQUEST_SUCCESS, REQUEST_FAILURE } from '../../lib/constants';
 import { QueryParser } from './query_parser';
+import { QueryDiff } from './query_diff';
 
 import * as WebSocket from 'ws';
 
-const transaction = require('pg-transact');
+const emptyMap = Map();
 
 export class Router extends WebSocketSubject<any> {
   protected _queries = Map<string, any>();
   protected _tables = Map<string, any>();
+  protected _diff: QueryDiff;
 
   constructor(socket: WebSocket, protected _app, protected _db, protected _notifier) {
     super(socket);
 
+    this._diff = new QueryDiff(this._db);
+
+    this._diff.subscribe(this);
+
     let notifier = this._notifier.subscribe(message => {
-      console.log(message);
+      if (message.channel !== 'theron_watchers') {
+        return;
+      }
+
+      const [action, tableName, rowId] = message.payload.split(',');
+
+      for (let queryId of this._tables.get(tableName, emptyMap).keys()) {
+        let query = this._queries.get(queryId);
+
+        if (query) {
+          this._diff.next({ type: EXECUTE_QUERY, queryId, queryText: query.get('queryText') });
+        }
+      }
     });
 
     this.subscribe(
@@ -66,16 +84,6 @@ export class Router extends WebSocketSubject<any> {
 
       let queryId = parser.queryId(this._app.db_url);
 
-      if (this._queries.has(queryId)) {
-        let queryMeta = this._queries.get(queryId);
-        this._queries = this._queries.set(queryId, queryMeta.set('subscribersCount', queryMeta.get('subscribersCount') + 1));
-      } else {
-        this._queries = this._queries.set(queryId, Map({ subscribersCount: 1, queryText, affectedTables: List(affectedTables) }));
-
-        console.log('sql query');
-        // perform sql query
-      }
-
       await this._db.tx(t => {
         let q = [];
 
@@ -95,6 +103,17 @@ export class Router extends WebSocketSubject<any> {
 
         return t.batch(q);
       });
+
+      if (this._queries.has(queryId)) {
+        let queryMeta = this._queries.get(queryId);
+        this._queries = this._queries.set(queryId, queryMeta.set('subscribersCount', queryMeta.get('subscribersCount') + 1));
+      } else {
+        this._queries = this._queries.set(queryId, Map({ subscribersCount: 1, queryText, affectedTables: List(affectedTables) }));
+
+        // Execute query
+
+        this._diff.next({ type: EXECUTE_QUERY, queryId, queryText });
+      }
 
       console.log('-----');
       console.log('in:queries');
@@ -125,8 +144,8 @@ export class Router extends WebSocketSubject<any> {
 
             if (tableMeta.isEmpty()) {
               this._tables = this._tables.delete(tableName);
-              console.log('remove watcher');
-              // remove watcher
+
+              // Remove trigger
             } else {
               this._tables = this._tables.set(tableName, tableMeta);
             }

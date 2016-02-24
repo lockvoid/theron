@@ -20,7 +20,7 @@ export class AppMain extends React.Component<any, any> {
 
     this._subscription = theron.watch('/api/apps', { order: 'name' }).subscribe(
       message => {
-        console.log(message);
+        // console.log(message);
       },
 
       error => {
@@ -30,7 +30,7 @@ export class AppMain extends React.Component<any, any> {
 
     let s2 = theron.watch('/api/apps', { order: 'name' }).subscribe(
       message => {
-        console.log(message);
+        // console.log(message);
       },
 
       error => {
@@ -38,13 +38,13 @@ export class AppMain extends React.Component<any, any> {
       }
     );
 
-    setTimeout(() => {
-      this._subscription.unsubscribe();
-    }, 3000);
+    // setTimeout(() => {
+    //   this._subscription.unsubscribe();
+    // }, 3000);
 
-    setTimeout(() => {
-      s2.unsubscribe();
-    }, 6000);
+    // setTimeout(() => {
+    //   s2.unsubscribe();
+    // }, 6000);
 
   }
 
