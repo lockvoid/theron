@@ -32,7 +32,7 @@ export class Router extends WebSocketSubject<any> {
         let query = this._queries.get(queryId);
 
         if (query) {
-          this._diff.next({ type: EXECUTE_QUERY, queryId, queryText: query.get('queryText') });
+          this._diff.next({ type: EXECUTE_QUERY, payload: { queryId, queryText: query.get('queryText') } });
         }
       }
     });
@@ -112,7 +112,7 @@ export class Router extends WebSocketSubject<any> {
 
         // Execute query
 
-        this._diff.next({ type: EXECUTE_QUERY, queryId, queryText });
+        this._diff.next({ type: EXECUTE_QUERY, payload: { queryId, queryText } });
       }
 
       console.log('-----');

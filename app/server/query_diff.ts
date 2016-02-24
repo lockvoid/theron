@@ -4,7 +4,7 @@ import { Map } from 'immutable';
 
 import { BaseRow } from './base_row';
 import { OrderedCache } from './ordered_cache';
-import { EXECUTE_QUERY, ROW_ADDED, ROW_CHANGED, ROW_MOVED, ROW_REMOVED } from '../../lib/constants';
+import { EXECUTE_QUERY, ROW_ADDED, ROW_CHANGED, ROW_MOVED, ROW_REMOVED, BEGIN_TRANSACTION, COMMIT_TRANSACTION, ROLLBACK_TRANSACTION } from '../../lib/constants';
 
 export class QueryDiff extends Subject<any> {
   protected _cache = Map<string, OrderedCache<any>>();
@@ -15,13 +15,15 @@ export class QueryDiff extends Subject<any> {
     this.destination = Subscriber.create<any>(message => {
       switch (message.type) {
         case EXECUTE_QUERY:
-          return this._executeQuery(message.queryId, message.queryText);
+          return this._executeQuery(message.payload.queryId, message.payload.queryText);
       }
     });
   }
 
   protected async _executeQuery(queryId: string, queryText: string) {
     try {
+      this._finalNext({ id: queryId, type: BEGIN_TRANSACTION });
+
       let currRows = new OrderedCache(await this._client.any(queryText));
       let prevRows = this._cache.get(queryId, new OrderedCache([]));
 
@@ -33,17 +35,17 @@ export class QueryDiff extends Subject<any> {
         let prevOffset = prevRows.offset(row.id);
 
         if (prevOffset === undefined) {
-          this._finalNext({ type: ROW_ADDED, payload });
+          this._finalNext({ id: queryId, type: ROW_ADDED, payload });
           return true;
         }
 
         if (row.updated_at.getTime() !== prevRows.rows[prevOffset].updated_at.getTime()) {
-          this._finalNext({ type: ROW_CHANGED, payload });
+          this._finalNext({ id: queryId, type: ROW_CHANGED, payload });
           return true;
         }
 
         if (prevOffset !== offset) {
-          this._finalNext({ type: ROW_MOVED, payload });
+          this._finalNext({ id: queryId, type: ROW_MOVED, payload });
           return true;
         }
       });
@@ -52,12 +54,14 @@ export class QueryDiff extends Subject<any> {
         let currOffset = currRows.offset(row.id);
 
         if (currOffset === undefined) {
-          this._finalNext({ type: ROW_REMOVED, payload: { row } });
+          this._finalNext({ id: queryId, type: ROW_REMOVED, payload: { row } });
           return true;
         }
       });
 
       this._cache = this._cache.set(queryId, currRows);
+
+      this._finalNext({ id: queryId, type: COMMIT_TRANSACTION });
     } catch (error) {
 
     }
