@@ -3,11 +3,11 @@ import { Subscriber } from 'rxjs/Subscriber';
 import { Map } from 'immutable';
 
 import { BaseRow } from './base_row';
-import { OrderedCache } from './ordered_cache';
+import { OffsetCache } from './offset_cache';
 import { EXECUTE_QUERY, ROW_ADDED, ROW_CHANGED, ROW_MOVED, ROW_REMOVED, BEGIN_TRANSACTION, COMMIT_TRANSACTION, ROLLBACK_TRANSACTION } from '../../lib/constants';
 
 export class QueryDiff extends Subject<any> {
-  protected _cache = Map<string, OrderedCache<any>>();
+  protected _cache = Map<string, OffsetCache<any>>();
 
   constructor(protected _client) {
     super();
@@ -24,8 +24,8 @@ export class QueryDiff extends Subject<any> {
     try {
       this._finalNext({ id: queryId, type: BEGIN_TRANSACTION });
 
-      let currRows = new OrderedCache(await this._client.any(queryText));
-      let prevRows = this._cache.get(queryId, new OrderedCache([]));
+      let currRows = new OffsetCache(await this._client.any(queryText));
+      let prevRows = this._cache.get(queryId, new OffsetCache([]));
 
       currRows.rows.forEach((row, offset) => {
         let payload = {
@@ -67,7 +67,7 @@ export class QueryDiff extends Subject<any> {
     }
   }
 
-  protected _prevRowId(rows: OrderedCache<any>, offset: number): number {
+  protected _prevRowId(rows: OffsetCache<any>, offset: number): number {
     let prevRow = rows.rows[offset - 1];
 
     if (prevRow) {

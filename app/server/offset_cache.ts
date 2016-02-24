@@ -1,6 +1,6 @@
 import { BaseRow } from './base_row';
 
-export class OrderedCache<T extends BaseRow> {
+export class OffsetCache<T extends BaseRow> {
   protected _offset = {};
 
   constructor(protected _rows: T[]) {
