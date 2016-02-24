@@ -1,12 +1,13 @@
 import { Subject } from 'rxjs/Subject';
 import { Subscriber } from 'rxjs/Subscriber';
+import { Map } from 'immutable';
 
 import { BaseRow } from './base_row';
 import { OrderedCache } from './ordered_cache';
 import { EXECUTE_QUERY, ROW_ADDED, ROW_CHANGED, ROW_MOVED, ROW_REMOVED } from '../../lib/constants';
 
 export class QueryDiff extends Subject<any> {
-  protected _cache: { [queryId: string]: OrderedCache<any> } = {};
+  protected _cache = Map<string, OrderedCache<any>>();
 
   constructor(protected _client) {
     super();
@@ -22,7 +23,7 @@ export class QueryDiff extends Subject<any> {
   protected async _executeQuery(queryId: string, queryText: string) {
     try {
       let currRows = new OrderedCache(await this._client.any(queryText));
-      let prevRows = this._cache[queryId] || new OrderedCache([]);
+      let prevRows = this._cache.get(queryId, new OrderedCache([]));
 
       currRows.rows.forEach((row, offset) => {
         let payload = {
@@ -56,7 +57,7 @@ export class QueryDiff extends Subject<any> {
         }
       });
 
-      this._cache[queryId] = currRows;
+      this._cache = this._cache.set(queryId, currRows);
     } catch (error) {
 
     }
