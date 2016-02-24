@@ -1,7 +1,7 @@
 import { Reducer } from 'redux';
 
 import { CONNECT_THERON } from '../actions/theron';
-import { Theron } from '../../../lib/driver';
+import { Theron } from '../../../lib/driver/driver';
 
 export const theron: Reducer = (state = null, action) => {
   switch (action.type) {

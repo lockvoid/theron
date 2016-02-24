@@ -1,20 +1,25 @@
 import { Observable } from 'rxjs/Observable';
 
-import { SUBSCRIBE_QUERY, UNSUBSCRIBE_QUERY, REQUEST_SUCCESS, REQUEST_FAILURE, ROW_ADDED, ROW_CHANGED, ROW_MOVED, ROW_REMOVED } from './constants';
-import { TheronOptions, TheronAuthOptions } from './options';
-import { uuid } from './utils/uuid';
-import { RescueWebSocketSubject } from './websocket';
+import { SUBSCRIBE_QUERY, UNSUBSCRIBE_QUERY, REQUEST_SUCCESS, REQUEST_FAILURE } from '../constants';
+import { TheronOptions, TheronAuthOptions } from '../options';
+import { ReplayCache } from './replay_cache';
+import { uuid } from './uuid';
+import { RescueWebSocketSubject } from '../websocket';
 
 import * as qs from 'qs';
 import 'whatwg-fetch';
 
 export class Theron extends RescueWebSocketSubject<any> {
+  protected _cache = new ReplayCache();
+
   constructor(url: string, options: TheronOptions) {
     super(`${url}?app=${options.app}`);
 
+    this.subscribe(this._cache);
+
     this.subscribe(
       message => {
-        console.log(message);
+        // console.log(message);
       },
 
       error => {
@@ -51,11 +56,15 @@ export class Theron extends RescueWebSocketSubject<any> {
           message => {
             switch (message.type) {
               case REQUEST_SUCCESS:
+                let queryId = message.payload.queryId;
+
                 unsubscribeRequest = this._constructRequest({
-                  type: UNSUBSCRIBE_QUERY, payload: { queryId: message.payload.queryId }
+                  type: UNSUBSCRIBE_QUERY, payload: { queryId }
                 });
 
                 observer.next(message);
+
+                this._cache.filter(action => action.id === queryId).subscribe(observer);
                 break;
 
               case REQUEST_FAILURE:
