@@ -2,12 +2,15 @@
 
 import * as express from 'express';
 import * as pg from 'pg';
+import * as bodyParser from 'body-parser';
+import * as jwt from 'jsonwebtoken';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/server';
 
 export const app = express();
 
 import { UserRecord } from './models/user';
+import { wrap } from './wrap_async';
 import { api } from './routes/api';
 
 //UserRecord.where('id', 1).fetch().then(function(user) {
@@ -102,8 +105,31 @@ FOR EACH ROW EXECUTE PROCEDURE notify_trigger();
 //  });
 //});
 
-// Configure views
+// Parse params
 
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// JWT-based auth
+
+app.use(wrap(async (req, res, next) => {
+  const token = req.body.token || req.query.token || req.headers['x-jwt-token'];
+
+  if (token) {
+    try {
+      let auth = jwt.verify(token, process.env['JWT_SECRET'])
+      req.currentUser = await (new UserRecord({ id: auth.userId })).fetch();
+    } catch (error) {
+      req.auth = null;
+    } finally {
+      return next()
+    }
+  }
+
+  next();
+}));
+
+// Configure views
 
 app.engine('js', (filename: string, options: any, done: Function) => {
   var markup = '<!DOCTYPE html>';
