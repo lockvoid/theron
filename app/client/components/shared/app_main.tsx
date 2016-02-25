@@ -18,34 +18,53 @@ export class AppMain extends React.Component<any, any> {
   componentWillMount() {
     const { theron } = this.props;
 
-    this._subscription = theron.watch('/api/apps', { order: 'name' }).subscribe(
-      message => {
-        // console.log(message);
-      },
+    let headers: any = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
 
-      error => {
-        console.log(error);
-      }
-    );
+    let body = JSON.stringify({
+      email: 'kochnev.d@gmail.com',
+      password: 'qazwsxedc'
+    });
 
-    let s2 = theron.watch('/api/apps', { order: 'name' }).subscribe(
-      message => {
-        // console.log(message);
-      },
+    fetch('/api/auth', { method: 'post', headers, body }).then(res => res.json()).then(({ token }) => {
+      theron.setAuth({ headers: { 'x-jwt-token': token } });
 
-      error => {
-        console.log(error);
-      }
-    );
+      this._subscription = theron.watch('/api/apps', { order: 'name' }).subscribe(
+        message => {
+          console.log(message);
+        },
 
-    // setTimeout(() => {
-    //   this._subscription.unsubscribe();
-    // }, 3000);
+        error => {
+          console.log(error);
+        }
+      );
 
-    // setTimeout(() => {
-    //   s2.unsubscribe();
-    // }, 6000);
+      setTimeout(() => {
+        let s2 = theron.watch('/api/apps', { order: 'name' }).subscribe(
+          message => {
+            console.log(message);
+          },
 
+          error => {
+            console.log(error);
+          }
+        );
+      }, 2000);
+
+      setTimeout(() => {
+        let s2 = theron.watch('/api/apps', { order: 'name' }).subscribe(
+          message => {
+            console.log(message);
+          },
+
+          error => {
+            console.log(error);
+          }
+        );
+      }, 20000);
+    });
   }
 
   componentWillUnmount() {

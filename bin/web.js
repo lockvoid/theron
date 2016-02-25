@@ -7,6 +7,8 @@ const http = require('http');
 const server = require('../dist/server/app/server/server');
 const socket = require('../dist/server/app/server/socket');
 
+require('../dist/server/app/server/database');
+
 // Bootstrap internal services
 
 const httpServer = http.createServer(server.app)

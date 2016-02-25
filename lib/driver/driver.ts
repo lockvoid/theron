@@ -10,7 +10,7 @@ import './fetch';
 
 import * as qs from 'qs';
 
-export interface TheronAuthOptions {
+export interface TheronAuth {
   headers?: any;
   params?: any;
 }
@@ -18,12 +18,13 @@ export interface TheronAuthOptions {
 export interface TheronOptions {
   app: string;
   secret?: string;
-  auth?: TheronAuthOptions;
 }
 
 export class Theron extends RescueWebSocketSubject<any> {
-  protected _options: TheronOptions;
   protected _cache = new ReplayCache();
+
+  protected _options: TheronOptions;
+  protected _auth: TheronAuth;
 
   static sign(queryText: string, secretKey: string): string {
     return hmac(secretKey, queryText);
@@ -32,9 +33,14 @@ export class Theron extends RescueWebSocketSubject<any> {
   constructor(url: string, options: TheronOptions) {
     super(`${url}?app=${options.app}`);
 
-    this._options = Object.assign({}, this._options, options);
-
+    this.setAuth();
     this.subscribe(this._cache);
+
+    this._options = Object.assign({}, this._options, options);
+  }
+
+  setAuth(auth: TheronAuth = {}) {
+    this._auth = Object.assign({}, this._auth, auth);
   }
 
   watch<T>(endpoint: string, params?: any): Observable<T> {
@@ -54,7 +60,9 @@ export class Theron extends RescueWebSocketSubject<any> {
     return new Observable<T>(observer => {
       var subscription;
 
-      fetch(`${endpoint}?${qs.stringify(params)}`).then(checkStatus).then(parseJson).then(query => {
+      const resourceUrl = `${endpoint}?${qs.stringify(Object.assign({}, params, this._auth.params))}`
+
+      fetch(resourceUrl, { headers: this._auth.headers }).then(checkStatus).then(parseJson).then(query => {
         let subscribeRequest = this._constructRequest({
           type: SUBSCRIBE_QUERY, payload: query
         });

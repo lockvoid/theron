@@ -13,15 +13,7 @@ import { UserRecord } from './models/user';
 import { wrap } from './wrap_async';
 import { api } from './routes/api';
 
-//UserRecord.where('id', 1).fetch().then(function(user) {
-//
-//  console.log(user);
-//
-//});
-// TEST
-
 /*
-
 // create functions
 
 CREATE OR REPLACE FUNCTION theron_notify_trigger() RETURNS trigger AS $$ BEGIN
@@ -118,11 +110,16 @@ app.use(wrap(async (req, res, next) => {
   if (token) {
     try {
       let auth = jwt.verify(token, process.env['JWT_SECRET'])
-      req.currentUser = await (new UserRecord({ id: auth.userId })).fetch();
-    } catch (error) {
-      req.auth = null;
+
+      if (auth) {
+        req.currentUser = await UserRecord.query().where('id', auth.userId).first()
+      }
+    } catch(e) {
+      if (e.name !== 'JsonWebTokenError') {
+        throw e;
+      }
     } finally {
-      return next()
+      return next();
     }
   }
 

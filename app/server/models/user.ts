@@ -1,62 +1,83 @@
+import { Model } from 'objection';
+import { EMAIL_REGEX } from '../../../lib/constants';
+
 import * as bcrypt from 'bcrypt';
 
-import { ModelOptions } from 'bookshelf';
-import { Database } from '../database';
-import { AppRecord } from './app';
+export class UserRecord extends Model {
+  static tableName = 'users';
 
-export class UserRecord extends Database.Model<any> {
+  static jsonSchema = {
+    type: 'object',
+    required: ['email', 'password'],
+
+    properties: {
+      id: {
+        type: 'integer',
+      },
+
+      email: {
+        type: 'string', pattern: EMAIL_REGEX,
+      },
+
+      password: {
+        type: 'string', minLength: 7,
+      },
+
+      name: {
+        type: 'string',
+      },
+    }
+  }
+
+  static get relationMappings() {
+    return {
+      apps: {
+        relation: Model.OneToManyRelation, modelClass: require('./app').AppRecord,
+
+        join: {
+          from: 'users.id', to: 'apps.user_id'
+        },
+      },
+    }
+  }
+
   static async auth(email: string = '', password: string = ''): Promise<any> {
-    let user = await (new UserRecord({ email })).fetch()
+    let user = await UserRecord.query().where('email', email).first();
 
     return new Promise((resolve, reject) => {
-      if (user) {
-        bcrypt.compare(password, user.get('password'), (err, res) => {
-          if (err) {
-            reject(err);
-          }
-
-          if (res) {
-            resolve(user);
-          } else {
-            resolve(null);
-          }
-        });
-      } else {
-        resolve(null);
+      if (!user) {
+        return resolve(null);
       }
-    });
-  }
 
-  constructor(attributes?: any, options?: ModelOptions) {
-    super(attributes, options);
-    this.on('creating', this.encryptPassword, this);
-  }
-
-  get tableName() {
-    return 'users';
-  }
-
-  encryptPassword(model, attrs, options): Promise<any> {
-    return new Promise((resolve, reject) => {
-      bcrypt.hash(model.attributes.password, 10, (err, hash) => {
+      bcrypt.compare(password, user.password, (err, res) => {
         if (err) {
-          return reject(err);
+          reject(err);
         }
 
-        model.set('password', hash);
-        resolve(hash);
+        res ? resolve(user) : resolve(null);
       });
     });
   }
 
-  isValidPassword(sd) {
-    console.log('sd');
+  async $beforeInsert(context) {
+    this['password'] = await this._encryptPassword(this['password']);
   }
 
-  apps() {
-    return this.hasMany(AppRecord);
+  async $beforeUpdate(options, context) {
+    if ('password' in this) {
+      this['password'] = await this._encryptPassword(this['password']);
+    }
+  }
+
+  protected _encryptPassword(password: string): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+      bcrypt.hash(password, 10, (err, hash) => {
+        if (err) {
+          throw err;
+        }
+
+        resolve(hash);
+      });
+    });
   }
 }
-
-////new UserRecord({email: 'kochnev.d@gmail.com', password: 'qazwsxedc'})
-//.save()

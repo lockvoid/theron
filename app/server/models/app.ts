@@ -1,12 +1,48 @@
-import { Database } from '../database';
-import { UserRecord } from './user';
+import { Model } from 'objection';
 
-export class AppRecord extends Database.Model<any> {
-  get tableName() {
-    return 'apps';
-  }
+export class AppRecord extends Model {
+  static tableName = 'apps';
 
-  user() {
-    return this.belongsTo(UserRecord);
+  static jsonSchema = {
+    type: 'object',
+    required: ['name', 'secret'],
+
+    properties: {
+      id: {
+        type: 'integer',
+      },
+
+      name: {
+        type: 'string',
+      },
+
+      secret: {
+        type: 'string',
+      },
+
+      development: {
+        type: 'boolean',
+      },
+
+      app_url: {
+        type: 'string',
+      },
+
+      db_url: {
+        type: 'string',
+      },
+    }
+  };
+
+  static get relationMappings() {
+    return {
+      user: {
+        relation: Model.OneToOneRelation, modelClass: require('./user').UserRecord,
+
+        join: {
+          from: 'apps.user_id', to: 'users.id',
+        },
+      },
+    }
   }
 }
