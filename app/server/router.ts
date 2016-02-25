@@ -2,6 +2,7 @@ import { WebSocketSubject } from '../../lib/websocket';
 import { Map, List } from 'immutable';
 
 import { SUBSCRIBE_QUERY, UNSUBSCRIBE_QUERY, EXECUTE_QUERY, REQUEST_SUCCESS, REQUEST_FAILURE } from '../../lib/constants';
+import { Theron } from '../../lib/driver/driver';
 import { QueryParser } from './query_parser';
 import { QueryDiff } from './query_diff';
 
@@ -67,9 +68,13 @@ export class Router extends WebSocketSubject<any> {
   }
 
   protected async _subscribeQuery(message) {
-    let { payload: { queryText } } = message;
+    let { payload: { queryText, querySignature } } = message;
 
     try {
+      if (!this._app.development && Theron.sign(queryText, this._app.secret) != querySignature) {
+        throw `Invalid signature '${querySignature}' for query '${queryText}`;
+      }
+
       let parser = new QueryParser(queryText);
 
       if (!(await parser.isSelectQuery())) {

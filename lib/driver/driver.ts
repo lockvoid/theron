@@ -1,31 +1,40 @@
 import { Observable } from 'rxjs/Observable';
 
 import { SUBSCRIBE_QUERY, UNSUBSCRIBE_QUERY, REQUEST_SUCCESS, REQUEST_FAILURE } from '../constants';
-import { TheronOptions, TheronAuthOptions } from '../options';
 import { ReplayCache } from './replay_cache';
-import { uuid } from './uuid';
 import { RescueWebSocketSubject } from '../websocket';
+import { uuid } from './uuid';
+import { hmac } from './sha256';
+
+import './fetch';
 
 import * as qs from 'qs';
-import 'whatwg-fetch';
+
+export interface TheronAuthOptions {
+  headers?: any;
+  params?: any;
+}
+
+export interface TheronOptions {
+  app: string;
+  secret?: string;
+  auth?: TheronAuthOptions;
+}
 
 export class Theron extends RescueWebSocketSubject<any> {
+  protected _options: TheronOptions;
   protected _cache = new ReplayCache();
+
+  static sign(queryText: string, secretKey: string): string {
+    return hmac(secretKey, queryText);
+  }
 
   constructor(url: string, options: TheronOptions) {
     super(`${url}?app=${options.app}`);
 
+    this._options = Object.assign({}, this._options, options);
+
     this.subscribe(this._cache);
-
-    this.subscribe(
-      message => {
-        // console.log(message);
-      },
-
-      error => {
-        console.log(error);
-      }
-    );
   }
 
   watch<T>(endpoint: string, params?: any): Observable<T> {
@@ -87,6 +96,10 @@ export class Theron extends RescueWebSocketSubject<any> {
         subscription && subscription.unsubscribe();
       }
     });
+  }
+
+  sign(queryText: string) {
+    return Theron.sign(queryText, this._options.secret);
   }
 
   protected _constructRequest(action) {
