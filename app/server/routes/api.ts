@@ -9,22 +9,14 @@ import { wrap } from '../wrap_async';
 
 export const api = express.Router();
 
-api.post('/auth', wrap(async (req, res) => {
+api.post('/auth', wrap(async (req, res, next) => {
   let user = await UserRecord.auth(req.body.email, req.body.password);
 
-  try {
-    if (!user) {
-      throw new AuthError(400, 'Authentication failed. Wrong email or password.');
-    }
-
-    res.json({ token: jwt.sign({ userId: user.id }, process.env['JWT_SECRET'], { expiresIn: '30d' }) });
-  } catch (e) {
-    if (e instanceof AuthError){
-      res.status(e.code).json({ reason: e.message });
-    } else {
-      throw e;
-    }
+  if (!user) {
+    return next(new AuthError(403, 'Wrong email or password'));
   }
+
+  res.json({ token: jwt.sign({ userId: user.id }, process.env['JWT_SECRET'], { expiresIn: '30d' }) });
 }));
 
 // Protected area
@@ -34,13 +26,12 @@ api.use((req, res, next) => {
     return next();
   }
 
-  res.status(401).json({ reason: 'Failed to authenticate token.' });
+  next(new AuthError(401, 'Failed to authenticate token'));
 });
 
 api.get('/apps', ({ currentUser, query }, res) => {
-  //let queryText = currentUser.$relatedQuery('apps').orderBy(query.order).toString()
-  let queryText = 'Select * from apps';
-  let querySignature = Theron.sign(queryText, '12345');
+  let queryText = currentUser.$relatedQuery('apps').orderBy(query.order).toString();
+  let querySignature = Theron.sign(queryText, process.env['THERON_SECRET']);
 
   res.json({ queryText, querySignature });
 });

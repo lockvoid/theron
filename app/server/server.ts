@@ -10,6 +10,7 @@ import * as ReactDOM from 'react-dom/server';
 export const app = express();
 
 import { UserRecord } from './models/user';
+import { BaseError } from '../../lib/base_error';
 import { wrap } from './wrap_async';
 import { api } from './routes/api';
 
@@ -166,6 +167,16 @@ if (app.get('env') === 'development') {
 // Mount routes
 
 app.use('/api', api);
+
+// Error handler
+
+app.use(<express.ErrorRequestHandler>((err, req, res, next) => {
+  if (err instanceof BaseError) {
+    res.status(err.code).json({ reason: err.message });
+  } else {
+    next(err);
+  }
+}));
 
 // Render pages
 

@@ -1,6 +1,5 @@
 import { Reducer } from 'redux';
-
-import { CONNECT_THERON } from '../actions/theron';
+import { CONNECT_THERON } from '../actions/index';
 import { Theron } from '../../../lib/driver/driver';
 
 export const theron: Reducer = (state = null, action) => {
