@@ -5,7 +5,7 @@ import { Router } from './router';
 import { verifyClient } from './utils/verify_client';
 
 export const app = async (httpServer) => {
-  const socketServer = new ws.Server({ server: httpServer, path: '/echo', verifyClient });
+  const socketServer = new ws.Server({ server: httpServer, path: '/echo', verifyClient: <any>verifyClient });
 
   socketServer.on('connection', (socket) => {
     let { db, app, notifier } = <any>socket.upgradeReq;

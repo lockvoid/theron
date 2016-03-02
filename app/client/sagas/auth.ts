@@ -1,37 +1,60 @@
+import { routeActions } from 'react-router-redux';
+import { stopSubmit } from 'redux-form';
 import { take, race, call, put, fork, select } from 'redux-saga/effects';
-import { REQUEST_SIGNIN, SIGNIN_SUCCESS, SIGNIN_FAILURE, REQUEST_LOGOUT, LOGOUT_SUCCESS, AUTH_TOKEN_KEY } from '../actions/index';
-import { signin, signedIn, signinFailure, logout, loggedOut } from '../actions/index';
+import { SIGNIN, SIGNIN_SUCCESS, SIGNIN_FAILURE, SIGNUP, SIGNUP_SUCCESS, SIGNUP_FAILURE, LOGOUT, LOGOUT_SUCCESS, AUTH_TOKEN_KEY } from '../actions/index';
+import { signinSuccess, signinFailure, signupSuccess, signupFailure, logout, logoutSuccess } from '../actions/index';
 import { waitEvent } from '../utils/wait_event';
 import { auth } from '../services/index';
+import { Api } from '../lib/api';
 
-function* signinWithPassword({ email, password }) {
+function* createToken({ email, password }) {
   try {
-    const { fetched } = yield race({ fetched: call(auth.fetchToken, email, password), overwise: take(REQUEST_LOGOUT) })
+    const created = yield call(Api.createToken, email, password);
 
-    if (fetched) {
-      yield call(storeToken, fetched.token, true);
-    } else {
-      yield call(clearToken, false);
-    }
+    yield call(storeToken, created.token, true);
   } catch (error) {
-    yield put(signinFailure(error.fetched));
+    yield put(signinFailure(error));
   }
 }
 
-function* storeToken(tokenHash: string, redirect: boolean) {
-  const token = auth.setToken(tokenHash);
-  yield put(signedIn(token, redirect));
+function* storeToken(tokenHash: string, performRedirect: boolean) {
+  const token = auth.storeToken(tokenHash);
+  yield put(signinSuccess(token, performRedirect));
 }
 
-function* clearToken(redirect) {
-  auth.removeToken();
-  yield put(loggedOut(redirect));
+function* purgeToken(performRedirect) {
+  auth.purgeToken();
+  yield put(logoutSuccess(performRedirect));
 }
 
 function* renewToken() {
+  // TODO
 }
 
-function* watchTokenStorage() {
+function* createUser({ email, password, name }) {
+  yield fork(function* () {
+    const { success } = yield race({ success: take(SIGNUP_SUCCESS), otherwise: take(SIGNUP_FAILURE) });
+
+    if (success) {
+      yield call(createToken, { email, password });
+    }
+  });
+
+  try {
+    const created = yield call(Api.createUser, email, password, name);
+
+    yield put(signupSuccess());
+  } catch (error) {
+    yield put(signupFailure(error));
+  }
+}
+
+function* refererPath(otherwise: string) {
+  const { state } = yield select(state => state.routing.location);
+  return state && state.nextPathname ? state.nextPathname : otherwise;
+}
+
+function* watchStorage() {
   while (true) {
     const { key, newValue, oldValue } = yield call(waitEvent, window, 'storage');
 
@@ -40,45 +63,86 @@ function* watchTokenStorage() {
     }
 
     if (newValue) {
-      oldValue ? void 0 /* renew token */ : yield call(storeToken, newValue, true);
+      oldValue ? void 0 : yield call(storeToken, newValue, true);
     } else {
       yield put(logout());
     }
   }
 }
 
-function* watchTokenExpiration(expiresIn) {
-  const { expired } = yield race({ expired: call(auth.expireToken, expiresIn), overwise: take(REQUEST_LOGOUT) })
+function* watchExpiration(expiresIn) {
+  const { expired } = yield race({ expired: call(auth.expireToken, expiresIn), overwise: take(LOGOUT) })
 
   if (expired) {
     yield call(renewToken);
   } else {
-    yield call(clearToken, true);
+    yield call(purgeToken, true);
+  }
+}
+
+function* redirectOnAuth() {
+  while (true) {
+    const { signin, logout } = yield race({ signin: take(SIGNIN_SUCCESS), logout: take(LOGOUT_SUCCESS)});
+
+    if (signin) {
+      signin.performRedirect && (yield put(routeActions.push(yield call(refererPath, '/'))));
+    } else {
+      logout.performRedirect && (yield put(routeActions.push('/signin')));
+    }
+  }
+}
+
+function* submitSigninForm() {
+  const { failure } = yield race({ success: take(SIGNIN_SUCCESS), failure: take(SIGNIN_FAILURE)});
+
+  if (failure) {
+    yield put(stopSubmit('signin', { _error: failure.reason.message }));
+  } else {
+    yield put(stopSubmit('signin'));
+  }
+}
+
+function* submitSignupForm() {
+  const { failure } = yield race({ success: take(SIGNUP_SUCCESS), failure: take(SIGNUP_FAILURE)});
+
+  if (failure) {
+    yield put(stopSubmit('signup', { _error: failure.reason.message }));
+  } else {
+    yield put(stopSubmit('signup'));
   }
 }
 
 export function* authFlow() {
-  while (true) {
-    yield fork(watchTokenStorage);
+  yield fork(watchStorage);
+  yield fork(redirectOnAuth);
 
-    const token = auth.getToken();
+  while (true) {
+    const token = auth.retrieveToken();
 
     if (token) {
       const state = yield select(state => state.auth);
 
       if (!state || state.token.toString() !== token.toString()) {
-        yield put(signedIn(token, false));
+        yield put(signinSuccess(token, false));
       }
 
-      yield call(watchTokenExpiration, token.expiresIn);
+      yield call(watchExpiration, token.expiresIn);
     } else {
-      yield call(clearToken, false);
+      yield call(purgeToken, false);
     }
 
-    const { credentials } = yield race({ credentials: take(REQUEST_SIGNIN), overwise: take(SIGNIN_SUCCESS) });
+    const { signin, signup } = yield race({ signin: take(SIGNIN), signup: take(SIGNUP), overwise: take(SIGNIN_SUCCESS) });
 
-    if (credentials) {
-      yield call(signinWithPassword, credentials);
+    if (signin) {
+      yield fork(submitSigninForm);
+      yield call(createToken, signin);
+      continue;
+    }
+
+    if (signup) {
+      yield fork(submitSignupForm);
+      yield call(createUser, signup);
+      continue;
     }
   }
 }

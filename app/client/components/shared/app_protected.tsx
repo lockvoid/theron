@@ -20,10 +20,10 @@ export class AppProtected extends React.Component<any, any> {
     let { children } = this.props;
 
     return (
-      <main>
+      <div className="protected">
         <AppHeader apps={[]} />
-        <wrapper>{children}</wrapper>
-      </main>
+        <main>{children}</main>
+      </div>
     );
   }
 }

@@ -8,7 +8,7 @@ export class UserRecord extends Model {
 
   static jsonSchema = {
     type: 'object',
-    required: ['email', 'password'],
+    required: ['email', 'password', 'name'],
 
     properties: {
       id: {

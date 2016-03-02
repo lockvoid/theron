@@ -10,13 +10,17 @@ export const FieldError = ({ error, touched }: FieldProp) => (
 
 export class FieldBox extends React.Component<FieldProp & React.Props<FieldBox>, {}> {
   className(): string {
-    const { error, touched } = this.props;
+    const { active, error, touched } = this.props;
 
     if (error && touched) {
       return 'field invalid';
-    } else {
-      return 'field'
     }
+
+    if (active) {
+      return 'field focused'
+    }
+
+    return 'field';
   }
 
   render() {

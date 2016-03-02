@@ -1,4 +1,7 @@
 $fonts: "Helvetica Neue", "Helvetica", "Roboto", "Arial", sans-serif;
 
-$color-theron: #673a83;
-$color-error: #dd2800;
+$color-failure: #f44336;
+$color-observe: #03a9f4;
+$color-primary: #4e3871;
+$color-success: #4caf50;
+$color-warning: #FF5722;

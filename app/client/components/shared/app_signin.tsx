@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Link } from 'react-router';
 import { Dispatch } from 'redux';
 import { reduxForm } from 'redux-form';
-import { signin, logout } from '../../actions/index';
+import { signin } from '../../actions/index';
 import { combineValidators, requiredValidator, emailValidator, passwordValidator } from '../../utils/validators';
 import { FieldBox, FieldError } from './field_box';
 import { SubmitButton } from './submit_button';
@@ -49,31 +49,33 @@ export class AppSignin extends React.Component<any, any> {
 
     return (
       <div className="signin">
-        <a href="/" className="logo">/* @include /public/images/theron.svg */</a>
+        <main>
+          <a href="/" className="logo">/* @include /public/images/theron.svg */</a>
 
-        <form className="app" onSubmit={handleSubmit}>
-          <div className="wrapper">
-            {error && <div className="alert warning">{error}</div>}
+          <form className="default" onSubmit={handleSubmit}>
+            <wrapper>
+              {error && !submitting && <div className="alert warning">{error}</div>}
 
-            <FieldBox {...email}>
-              <div className="label">Email</div>
-              <input type="text" {...email} />
-            </FieldBox>
+              <FieldBox {...email}>
+                <div className="title">Email</div>
+                <input type="text" {...email} />
+              </FieldBox>
 
-            <FieldBox {...password}>
-              <div className="label">Password</div>
-              <input type="password" {...password} />
-            </FieldBox>
+              <FieldBox {...password}>
+                <div className="title">Password</div>
+                <input type="password" {...password} />
+              </FieldBox>
 
-            <div className="buttons">
-              <SubmitButton title="Sign In" submitting={submitting} className="justify" />
-            </div>
-          </div>
+              <div className="buttons">
+                <SubmitButton title="Sign In" submitting={submitting} className="justify" />
+              </div>
+            </wrapper>
 
-          <Link to="/signup" className="footer">
-            New to Theron? Sign Up
-          </Link>
-        </form>
+            <Link to="/signup" className="footer">
+              New to Theron? Sign Up
+            </Link>
+          </form>
+        </main>
       </div>
     );
   }

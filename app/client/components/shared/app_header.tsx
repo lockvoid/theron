@@ -5,7 +5,7 @@ import { Link } from 'react-router';
 export class AppHeader extends React.Component<any, any> {
   render() {
     return (
-      <header className="app">
+      <header className="primary">
         <Link to="/" className="logo">/* @include /public/images/theron.svg */</Link>
 
         <nav className="account">

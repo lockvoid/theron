@@ -1,3 +1,13 @@
+@keyframes fader {
+  0%, 100% {
+    color: $color-observe;
+  }
+
+  50% {
+    color: color(white b(40%));
+  }
+}
+
 html {
   box-sizing: border-box !important;
   font-size: 62.5%;
@@ -50,7 +60,7 @@ a {
   text-decoration: none;
 
   &:hover {
-    color: $color-theron;
+    color: $color-primary;
     cursor: pointer;
   }
 
@@ -84,7 +94,7 @@ b {
 
 pre, code {
   background-color: white;
-  border-radius: 3px;
+  border-radius: 2px;
   font-family:  Consolas, Menlo, Monaco,"Courier New", monospace;
   font-size: 12px;
   overflow-x: auto;
@@ -100,6 +110,10 @@ code {
   display: inline;
   padding: 3px;
   white-space: nowrap;
+}
+
+wrapper {
+  display: block;
 }
 
 input[type="text"], input[type="search"], input[type="email"], input[type="password"] {
@@ -133,25 +147,27 @@ input[type="button"], button, a.button {
   }
 
   &.primary {
-    background-color: $color-theron;
-    border-radius: 3px;
-    color: color(white a(0.8));
+    background-color: $color-primary;
+    border-radius: 2px;
+    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 1px 5px 0 rgba(0, 0, 0, 0.12);
+    color: color(white a(0.85));
     cursor: pointer;
     display: block;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 500;
     height: 40px;
     min-width: 90px;
     padding: 0px 13px;
     text-align: center;
+    text-transform: uppercase;
 
     &:hover {
       color: white;
     }
 
     &:active, &:active:hover {
-      background-color: color($color-theron l(-5%));
-      color: color(white a(0.8));
+      background-color: color($color-primary l(-5%));
+      color: color(white a(0.85));
       transition: none;
     }
 
@@ -161,21 +177,21 @@ input[type="button"], button, a.button {
   }
 }
 
-form.app {
+form.default {
   div.alert {
-    border-radius: 3px;
-    border: 1px solid transparent;
-    padding: 10px;
+    border-radius: 2px;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 15px;
     text-align: center;
 
-    & + label.field {
-      margin-top: 36px;
+    &.warning {
+      background-color: $color-warning;
     }
 
-    &.warning {
-      background-color: #fcf8e3;
-      border-color: #faebcc;
-      color: #8a6d3b;
+    & + label.field {
+      margin-top: 40px;
     }
   }
 
@@ -184,106 +200,80 @@ form.app {
     max-width: 500px;
 
     & + label.field {
-      margin-top: 16px;
+      margin-top: 18px;
     }
 
     input[type="text"], input[type="email"], input[type="password"] {
       background-color: transparent;
-      background-image: linear-gradient($color-theron, $color-theron), linear-gradient(color(white b(20%)), color(white b(20%)));
+      background-image: linear-gradient($color-primary, $color-primary), linear-gradient(color(white b(20%)), color(white b(20%)));
       background-position: center bottom, center calc(100% - 1px);
       background-repeat: no-repeat;
       background-size: 0 2px, 100% 1px;
-      height: 40px;
-      margin-bottom: 8px;
-      padding: 0 2px;
+      height: 36px;
+      padding: 0 0 2px;
       transition: background 0s ease-out;
       width: 100%;
 
       &:focus {
         background-size: 100% 2px, 100% 1px;
-        transition-duration: 0.3s;
+        transition-duration: .2s;
+      }
+
+      &:-webkit-autofill  {
+        box-shadow: 0 -1px 0 0 color(white b(20%)) inset;
       }
     }
 
-    div.label {
+    div.title {
       color: color(white b(90%));
-      display: block;
+      display: flex;
       font-size: 12px;
       font-weight: 500;
+      height: 16px;
       text-transform: uppercase;
+
+      span.async {
+        color: $color-observe;
+        margin-left: auto;
+        animation: fader 2s infinite linear both;
+      }
+    }
+
+    div.error, div.hint {
+      font-size: 12px;
+      line-height: 18px;
+      margin-top: 4px;
+      min-height: 18px;
+    }
+
+    div.error {
+      color: $color-failure;
     }
 
     div.hint {
       color: color(white b(90%));
-      font-size: 12px;
-      line-height: 17px;
-      min-height: 17px;
     }
 
-    div.error {
-      color: $color-error;
-      font-size: 12px;
-      line-height: 17px;
-      min-height: 17px;
-      text-align: left;
+    &.focused {
+      div.title {
+        color: $color-primary;
+      }
     }
 
     &.invalid {
-      div.label {
-        color: $color-error;
+      div.title {
+        color: $color-failure;
       }
 
       input[type="text"], input[type="email"], input[type="password"] {
-        background-image: linear-gradient($color-error, $color-error), linear-gradient(color(white b(20%)), color(white b(20%)));
+        background-image: linear-gradient($color-failure, $color-failure), linear-gradient(color(white b(20%)), color(white b(20%)));
       }
-    }
-  }
-
-  label.field div.checkbox {
-    align-items: center;
-    display: flex;
-    margin: 16px 0px 8px;
-    pointer-events: none;
-    position: relative;
-
-    label {
-      margin: 0 0 0 8px;
-    }
-
-    i {
-      border-radius: 1px;
-      border: 2px solid color(white b(50%));
-      color: transparent;
-      display: block;
-      height: 17px;
-      position: relative;
-      width: 17px;
-
-      svg {
-        height: 17px;
-        left: -2px;
-        position: absolute;
-        top: -2px;
-        width: 17px;
-      }
-    }
-
-    input[type="checkbox"] {
-      opacity: 0;
-      position: absolute;
-      z-index: -1;
-    }
-
-    &.checked i {
-      background-color: $color-theron;
-      border-color: $color-theron;
-      color: color(white a(0.8));
     }
   }
 
   div.buttons {
     display: flex;
-    margin-top: 14px;
+    margin-top: 18px;
     max-width: 500px;
   }
 }

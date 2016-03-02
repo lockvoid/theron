@@ -9,6 +9,7 @@ import * as ReactDOM from 'react-dom/server';
 
 export const app = express();
 
+import { ValidationError } from 'objection';
 import { UserRecord } from './models/user';
 import { BaseError } from '../../lib/base_error';
 import { wrap } from './wrap_async';
@@ -110,17 +111,13 @@ app.use(wrap(async (req, res, next) => {
 
   if (token) {
     try {
-      let auth = jwt.verify(token, process.env['JWT_SECRET'])
+      const auth = jwt.verify(token, process.env['JWT_SECRET']);
 
-      if (auth) {
-        req.currentUser = await UserRecord.query().where('id', auth.userId).first()
+      req.currentUser = await UserRecord.query().where('id', auth.userId).first();
+    } catch(error) {
+      if (error.name !== 'JsonWebTokenError' && error.name !== 'TokenExpiredError') {
+        return next(error);
       }
-    } catch(e) {
-      if (e.name !== 'JsonWebTokenError') {
-        throw e;
-      }
-    } finally {
-      return next();
     }
   }
 
@@ -133,7 +130,7 @@ app.engine('js', (filename: string, options: any, done: Function) => {
   var markup = '<!DOCTYPE html>';
 
   try {
-    let component = require(filename).default;
+    const component = require(filename).default;
 
     markup += ReactDOM.renderToStaticMarkup(React.createElement(component, options));
   } catch (e) {
@@ -172,10 +169,14 @@ app.use('/api', api);
 
 app.use(<express.ErrorRequestHandler>((err, req, res, next) => {
   if (err instanceof BaseError) {
-    res.status(err.code).json({ reason: err.message });
-  } else {
-    next(err);
+    return res.status(err.code).json({ reason: err.message });
   }
+
+  if (err instanceof ValidationError) {
+    return res.status(400).json({ reason: err.message });
+  }
+
+  next(err);
 }));
 
 // Render pages

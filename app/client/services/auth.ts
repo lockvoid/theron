@@ -28,40 +28,12 @@ export function canActivate(store, { authRequired } : { authRequired: boolean })
   }
 }
 
-export function fetchToken(email, password) {
-  let headers: any = {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json'
-  }
-
-  let body = JSON.stringify({
-    email,
-    password
-  });
-
-  const checkStatus = async (res) => {
-    if (res.status >= 200 && res.status < 300) {
-      return res;
-    }
-
-    try {
-      var reason = new FetchError(res.status, (await res.json()).reason);
-    } catch (error) {
-      var reason = new FetchError(res.status, res.statusText);
-    }
-
-    throw reason;
-  }
-
-  return fetch('/api/auth', { method: 'post', headers, body }).then(checkStatus).then(res => res.json())
-}
-
-export function setToken(token: string): AuthToken {
+export function storeToken(token: string): AuthToken {
   localStorage.setItem(AUTH_TOKEN_KEY, token);
-  return getToken();
+  return retrieveToken();
 }
 
-export function getToken(): AuthToken {
+export function retrieveToken(): AuthToken {
   try {
     return new AuthToken(localStorage.getItem(AUTH_TOKEN_KEY));
   } catch (error) {
@@ -69,10 +41,10 @@ export function getToken(): AuthToken {
   }
 }
 
-export function removeToken() {
+export function purgeToken() {
   localStorage.removeItem(AUTH_TOKEN_KEY);
 }
 
-export function expireToken(expiresIn: number) {
-  return new Promise(resolve => setTimeout(() => resolve(true), Math.min(expiresIn, 2147483647)));
+export function expireToken(expiresIn: number): Promise<boolean> {
+  return new Promise<boolean>(resolve => setTimeout(() => resolve(true), Math.min(expiresIn, 2147483647)));
 }
