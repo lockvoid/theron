@@ -10,6 +10,7 @@ export const LOGOUT = 'TN:REQUEST_LOGOUT';
 export const LOGOUT_SUCCESS = 'TN:LOGOUT_SUCCESS';
 export const AUTH_TOKEN_KEY = 'TN:AUTH_TOKEN_KEY';
 
+export const REDIRECT_TO_FIRST_APP = 'TN:REDIRECT_TO_FIRST_APP';
 export const SELECT_APP = 'TN:SELECT_APP';
 export const CREATE_APP = 'TN:CREATE_APP';
 export const UPDATE_APP = 'TN:UPDATE_APP';
@@ -47,6 +48,10 @@ export function logout() {
 
 export function logoutSuccess(performRedirect: boolean) {
   return { type: LOGOUT_SUCCESS, performRedirect };
+}
+
+export function redirectToFirstApp() {
+  return { type: REDIRECT_TO_FIRST_APP };
 }
 
 export function selectApp(id: number) {

@@ -1,7 +1,7 @@
 import { routeActions } from 'react-router-redux';
 import { take, race, call, put, fork, select } from 'redux-saga/effects';
 import { wrapObservable } from '../utils/wrap_observable';
-import { SELECT_APP, CREATE_APP, UPDATE_APP, DELETE_APP, WATCH_APPS, UNWATCH_APPS } from '../actions/index';
+import { REDIRECT_TO_FIRST_APP, SELECT_APP, CREATE_APP, UPDATE_APP, DELETE_APP, WATCH_APPS, UNWATCH_APPS } from '../actions/index';
 import { Theron, ROW_ADDED, ROW_CHANGED, ROW_REMOVED } from '../../../lib/driver/driver';
 
 function* watchCreate() {
@@ -72,6 +72,22 @@ function* watchDelete() {
   }
 }
 
+function* indexRedirect() {
+  while (true) {
+    yield take(REDIRECT_TO_FIRST_APP);
+
+    const { apps } = yield select();
+
+    if (apps.rows.isEmpty()) {
+      var redirectTo = 'apps/new';
+    } else {
+      var redirectTo = `apps/${apps.rows.get(0).id}`;
+    }
+
+    yield put(routeActions.push(redirectTo));
+  }
+}
+
 function* streamApps() {
   while (true) {
     yield take(WATCH_APPS);
@@ -95,6 +111,7 @@ export function* appsFlow() {
     fork(watchCreate),
     fork(watchUpdate),
     fork(watchDelete),
+    fork(indexRedirect),
     fork(streamApps),
   ]
 }

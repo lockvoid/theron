@@ -1,10 +1,10 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
-import { Router, Route, IndexRedirect, browserHistory } from 'react-router';
+import { Router, Route, IndexRoute, IndexRedirect, browserHistory } from 'react-router';
 import { Provider } from 'react-redux';
 import { AppMain, AppSignin, AppSignup, AppLogout, AppProtected } from './components/shared/index';
-import { NewApp, ShowApp } from './components/apps/index';
+import { RedirectToFirstApp, NewApp, ShowApp } from './components/apps/index';
 import { configureStore } from './store/configure_store';
 import { auth } from './services/index';
 
@@ -23,6 +23,8 @@ const entry = (
           <Route path="logout" component={AppLogout} />
 
           <Route path="apps">
+            <IndexRoute component={RedirectToFirstApp} />
+
             <Route path="new" component={NewApp} />
             <Route path=":appId" component={ShowApp} />
           </Route>

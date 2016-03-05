@@ -19,7 +19,7 @@ export class Checkbox extends React.Component<FieldProp & React.Props<Checkbox>,
 
     return (
       <div className={`checkbox ${this.className()}`}>
-        <input type="hidden" {...field} value={false} />
+        <input type="hidden" {...field} value="false" />
         <input type="checkbox" {...field} />
         <i>/* @include /public/images/icons/check.svg */</i>
         <div className="title">{children}</div>
