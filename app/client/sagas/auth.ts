@@ -9,9 +9,9 @@ import { Api } from '../lib/api';
 
 function* createToken({ email, password }) {
   try {
-    const created = yield call(Api.createToken, email, password);
+    const { token } = yield Api.createToken(email, password);
 
-    yield call(storeToken, created.token, true);
+    yield call(storeToken, token, true);
   } catch (error) {
     yield put(signinFailure(error));
   }
@@ -41,7 +41,7 @@ function* createUser({ email, password, name }) {
   });
 
   try {
-    const created = yield call(Api.createUser, email, password, name);
+    const user = yield Api.createUser(email, password, name);
 
     yield put(signupSuccess());
   } catch (error) {

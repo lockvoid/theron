@@ -83,7 +83,7 @@ app header.primary {
       color: color(white a(0.8));
       display: flex;
       font-weight: 500;
-      height: 60px;
+      height: 50px;
       padding: 0px 30px;
       position: relative;
       transition: color .1s;
@@ -113,19 +113,43 @@ app header.primary {
   }
 
   nav.apps {
-    display: flex;
+    box-shadow: inset 0 8px 8px -8px color(black a(15%)), inset 0 -8px 8px -8px color(black a(15%));
     flex-direction: column;
     flex: 1;
     overflow-y: auto;
     position: relative;
-
-    spinner div {
-      background-color: white;
-    }
   }
 
   nav.account {
     margin-top: auto;
+  }
+}
+
+app div.notfound  {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: auto;
+
+  h2 {
+    font-size: 70px;
+    color: color(white b(50%));
+  }
+}
+
+app header.default {
+  align-items: center;
+  background-color: white;
+  border-bottom: 2px solid color(white b(5%));
+  display: flex;
+  height: 65px;
+  padding: 0 40px;
+
+  h1 {
+    color: $color-primary;
+    font-size: 20px;
+    font-weight: 400;
   }
 }
 
@@ -193,3 +217,12 @@ app div.signin, app div.signup {
   }
 }
 
+app div.apps {
+  flex: 1;
+}
+
+app div.apps.new {
+  form {
+    padding: 40px;
+  }
+}

@@ -39,7 +39,7 @@ export class QueryDiff extends Subject<any> {
           return true;
         }
 
-        if (row.updated_at.getTime() !== prevRows.rows[prevOffset].updated_at.getTime()) {
+        if (this._formatTime(row.updated_at) !== this._formatTime(prevRows.rows[prevOffset].updated_at)) {
           this._finalNext({ id: queryId, type: ROW_CHANGED, payload });
           return true;
         }
@@ -51,10 +51,14 @@ export class QueryDiff extends Subject<any> {
       });
 
       prevRows.rows.forEach((row, offset) => {
+        let payload = {
+          row, prevRowId: this._prevRowId(currRows, offset)
+        };
+
         let currOffset = currRows.offset(row.id);
 
         if (currOffset === undefined) {
-          this._finalNext({ id: queryId, type: ROW_REMOVED, payload: { row } });
+          this._finalNext({ id: queryId, type: ROW_REMOVED, payload });
           return true;
         }
       });
@@ -63,7 +67,7 @@ export class QueryDiff extends Subject<any> {
 
       this._finalNext({ id: queryId, type: COMMIT_TRANSACTION });
     } catch (error) {
-
+      console.log(error);
     }
   }
 
@@ -75,5 +79,19 @@ export class QueryDiff extends Subject<any> {
     } else {
       return null;
     }
+  }
+
+  protected _nextRowId(rows: OffsetCache<any>, offset: number): number {
+    let nextRow = rows.rows[offset + 1];
+
+    if (nextRow) {
+      return nextRow.id;
+    } else {
+      return null;
+    }
+  }
+
+  protected _formatTime(time: any): string {
+    return time && time.toString();
   }
 }

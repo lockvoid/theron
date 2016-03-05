@@ -1,22 +1,35 @@
 import { Model } from 'objection';
+import { randomBytes } from 'crypto';
+import { BaseModel } from './base_model';
 
-export class AppRecord extends Model {
+export class AppRecord extends BaseModel {
   static tableName = 'apps';
 
   static jsonSchema = {
     type: 'object',
-    required: ['name', 'secret'],
+
+    required: [
+      'name'
+    ],
 
     properties: {
       id: {
         type: 'integer',
       },
 
-      name: {
+      created_at: {
         type: 'string',
       },
 
-      secret: {
+      updated_at: {
+        type: 'string',
+      },
+
+      user_id: {
+        type: 'number',
+      },
+
+      name: {
         type: 'string',
       },
 
@@ -24,11 +37,15 @@ export class AppRecord extends Model {
         type: 'boolean',
       },
 
-      app_url: {
-        type: 'string',
+      db_url: {
+        type: ['string', 'null'],
       },
 
-      db_url: {
+      app_url: {
+        type: ['string', 'null'],
+      },
+
+      secret: {
         type: 'string',
       },
     }
@@ -44,5 +61,17 @@ export class AppRecord extends Model {
         },
       },
     }
+  }
+
+  static generateSecret(): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+      randomBytes(16, (err, buf) => err ? reject(err) : resolve(buf.toString('hex')));
+    });
+  }
+
+  async $beforeInsert(context) {
+    super.$beforeInsert(context);
+
+    this['secret'] = await AppRecord.generateSecret();
   }
 }

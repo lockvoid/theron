@@ -4,10 +4,11 @@ import { Link } from 'react-router';
 import { Dispatch } from 'redux';
 import { reduxForm } from 'redux-form';
 import { signup } from '../../actions/index';
-import { combineValidators, requiredValidator, emailValidator, passwordValidator, emailUniquenessValidator } from '../../utils/validators';
+import { combineValidators, requiredValidator, emailValidator, passwordValidator, uniquenessValidator } from '../../utils/validators';
 import { FieldBox, FieldError } from './field_box';
 import { SubmitButton } from './submit_button';
 import { AppSpinner } from '../../../../lib/components/app_spinner';
+import { Api } from '../../lib/api';
 
 const formConfig = {
   form: 'signup',
@@ -34,7 +35,7 @@ const formConfig = {
     'email'
   ],
 
-  asyncValidate: emailUniquenessValidator
+  asyncValidate: uniquenessValidator('email', email => Api.isEmailUniqueness(email)),
 }
 
 const stateToProps = (state) => {

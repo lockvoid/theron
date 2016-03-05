@@ -10,6 +10,8 @@ import './fetch';
 
 import * as qs from 'qs';
 
+export * from '../constants';
+
 export interface TheronAuth {
   headers?: any;
   params?: any;
@@ -28,6 +30,14 @@ export class Theron extends RescueWebSocketSubject<any> {
 
   static sign(queryText: string, secretKey: string): string {
     return hmac(secretKey, queryText);
+  }
+
+  static prefixAction(action, queryName: string) {
+    return Object.assign({}, action, { type: Theron.prefixActionType(action.type, queryName) })
+  }
+
+  static prefixActionType(actionType: string, queryName: string): string {
+    return `${queryName.toUpperCase()}:${actionType}`;
   }
 
   constructor(url: string, options: TheronOptions) {

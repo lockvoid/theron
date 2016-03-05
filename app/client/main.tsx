@@ -4,6 +4,7 @@ import * as ReactDOM from 'react-dom';
 import { Router, Route, IndexRedirect, browserHistory } from 'react-router';
 import { Provider } from 'react-redux';
 import { AppMain, AppSignin, AppSignup, AppLogout, AppProtected } from './components/shared/index';
+import { NewApp, ShowApp } from './components/apps/index';
 import { configureStore } from './store/configure_store';
 import { auth } from './services/index';
 
@@ -21,7 +22,10 @@ const entry = (
 
           <Route path="logout" component={AppLogout} />
 
-          <Route path="apps" component={AppSignin} />
+          <Route path="apps">
+            <Route path="new" component={NewApp} />
+            <Route path=":appId" component={ShowApp} />
+          </Route>
         </Route>
       </Route>
     </Router>

@@ -1,18 +1,30 @@
 import { Model } from 'objection';
-import { EMAIL_REGEX } from '../../../lib/constants';
+import { BaseModel } from './base_model';
+import { EMAIL_REGEX } from '../../../lib/regex';
 
 import * as bcrypt from 'bcrypt';
 
-export class UserRecord extends Model {
+export class UserRecord extends BaseModel {
   static tableName = 'users';
 
   static jsonSchema = {
     type: 'object',
-    required: ['email', 'password', 'name'],
+
+    required: [
+      'email', 'password', 'name'
+    ],
 
     properties: {
       id: {
         type: 'integer',
+      },
+
+      created_at: {
+        type: 'string',
+      },
+
+      updated_at: {
+        type: 'string',
       },
 
       email: {
@@ -60,10 +72,14 @@ export class UserRecord extends Model {
   }
 
   async $beforeInsert(context) {
+    super.$beforeInsert(context);
+
     this['password'] = await this._encryptPassword(this['password']);
   }
 
   async $beforeUpdate(options, context) {
+    super.$beforeUpdate(options, context);
+
     if ('password' in this) {
       this['password'] = await this._encryptPassword(this['password']);
     }

@@ -1,27 +1,39 @@
 import * as React from 'react';
 
-import { connect } from 'react-redux';
+import { connect, MapDispatchToPropsObject } from 'react-redux';
 import { Dispatch } from 'redux';
 import { AppHeader } from './app_header';
 import { AppSpinner } from '../../../../lib/components/app_spinner';
+import { watchApps, unwatchApps } from '../../actions/index';
 
 const stateToProps = (state) => {
   return state;
 }
 
-const dispatchToProps = (dispatch: Dispatch) => {
-  return {
-  }
+const dispatchToProps: MapDispatchToPropsObject = {
+  watchApps, unwatchApps
 }
 
 @connect(stateToProps, dispatchToProps)
 export class AppProtected extends React.Component<any, any> {
+  componentWillMount() {
+    this.props.watchApps();
+  }
+
+  componentWillUnmount() {
+    this.props.unwatchApps();
+  }
+
   render() {
-    let { children } = this.props;
+    let { children, apps } = this.props;
+
+    if (!apps.meta.initialized) {
+      return <AppSpinner />;
+    }
 
     return (
       <div className="protected">
-        <AppHeader apps={[]} />
+        <AppHeader apps={apps} />
         <main>{children}</main>
       </div>
     );

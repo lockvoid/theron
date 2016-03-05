@@ -136,7 +136,16 @@ input[type="button"], button, a.button {
   border: 0;
   font-family: OpenSans, $fonts;
   padding: 0;
-  transition: color .1s;
+  cursor: pointer;
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  height: 40px;
+  min-width: 90px;
+  padding: 0px 13px;
+  text-align: center;
+  text-transform: uppercase;
+  border-radius: 2px;
 
   &:focus {
     outline: none;
@@ -146,38 +155,59 @@ input[type="button"], button, a.button {
     width: 100%;
   }
 
-  &.primary {
-    background-color: $color-primary;
-    border-radius: 2px;
+  &.end {
+    margin-left: auto;
+  }
+
+  &.raised {
     box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 1px 5px 0 rgba(0, 0, 0, 0.12);
     color: color(white a(0.85));
-    cursor: pointer;
-    display: block;
-    font-size: 14px;
-    font-weight: 500;
-    height: 40px;
-    min-width: 90px;
-    padding: 0px 13px;
-    text-align: center;
-    text-transform: uppercase;
+    transition: color .1s;
 
     &:hover {
       color: white;
     }
 
     &:active, &:active:hover {
-      background-color: color($color-primary l(-5%));
       color: color(white a(0.85));
       transition: none;
+    }
+
+    &.primary {
+      background-color: $color-primary;
+
+      &:active, &:active:hover {
+        background-color: color($color-primary l(-5%));
+      }
     }
 
     spinner div {
       background-color: white;
     }
   }
+
+  &.flat {
+    background-color: transparent;
+    transition: background-color .1s;
+
+    &:hover {
+      background-color: color(white b(15%));
+    }
+
+    &:active, &:active:hover {
+      background-color: color(white b(20%));
+      transition: none;
+    }
+
+    &.danger {
+      color: $color-failure;
+    }
+  }
 }
 
 form.default {
+  max-width: 600px;
+
   div.alert {
     border-radius: 2px;
     color: white;
@@ -185,6 +215,10 @@ form.default {
     font-weight: 500;
     padding: 15px;
     text-align: center;
+
+    &.failure {
+      background-color: $color-failure;
+    }
 
     &.warning {
       background-color: $color-warning;
@@ -197,7 +231,6 @@ form.default {
 
   label.field {
     display: block;
-    max-width: 500px;
 
     & + label.field {
       margin-top: 18px;
@@ -271,9 +304,51 @@ form.default {
     }
   }
 
+  label.field div.checkbox {
+    align-items: center;
+    display: flex;
+    margin-bottom: 6px;
+    pointer-events: none;
+    position: relative;
+
+    div.title {
+      margin: 0 0 0 8px;
+      color: color(white b(90%));
+    }
+
+    i {
+      border-radius: 1px;
+      border: 2px solid color(white b(50%));
+      color: transparent;
+      display: block;
+      height: 17px;
+      position: relative;
+      width: 17px;
+
+      svg {
+        height: 17px;
+        left: -2px;
+        position: absolute;
+        top: -2px;
+        width: 17px;
+      }
+    }
+
+    input[type="checkbox"] {
+      opacity: 0;
+      position: absolute;
+      z-index: -1;
+    }
+
+    &.checked i {
+      background-color: $color-primary;
+      border-color: $color-primary;
+      color: color(white a(0.8));
+    }
+  }
+
   div.buttons {
     display: flex;
     margin-top: 18px;
-    max-width: 500px;
   }
 }

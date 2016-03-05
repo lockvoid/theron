@@ -1,8 +1,7 @@
 import * as express from 'express';
 
 import { Theron } from '../../../lib/driver/driver';
-import { AppRecord } from '../models/app';
-import { UserRecord } from '../models/user';
+import { UserRecord, AppRecord } from '../models';
 import { AuthError } from '../auth_error';
 import { wrap } from '../wrap_async';
 import { signUser } from '../utils/sign_user';
@@ -22,11 +21,11 @@ api.post('/tokens', wrap(async ({ body }, res, next) => {
 api.post('/users', wrap(async ({ body }, res, next) => {
   const user = await UserRecord.query().insert(body);
 
-  res.json({});
+  res.json({ id: user.id });
 }));
 
-api.get('/users/email/:email/validate', wrap(async ({ params }, res, next) => {
-  const { count } = await UserRecord.query().where('email', params.email).count('id').first();
+api.get('/users/email/:email/uniqueness', wrap(async ({ params, query }, res, next) => {
+  const { count } = await UserRecord.query().where('email', params.email).whereNot('id', query.id).count('id').first();
 
   res.json(parseInt(count) === 0);
 }));
@@ -41,9 +40,33 @@ api.use((req, res, next) => {
   next(new AuthError(401, 'Failed to authenticate token'));
 });
 
+api.post('/apps', wrap(async ({ currentUser, body }, res, next) => {
+  const app = await currentUser.$relatedQuery('apps').insert(body);
+
+  res.json({ id: app.id });
+}));
+
+api.patch('/apps/:appId', wrap(async ({ currentUser, params, body }, res, next) => {
+  const app = await currentUser.$relatedQuery('apps').patchAndFetchById(params.appId, body);
+
+  res.json({});
+}));
+
+api.delete('/apps/:appId', wrap(async ({ currentUser, params, body }, res, next) => {
+  const app = await currentUser.$relatedQuery('apps').delete().where('id', params.appId);
+
+  res.json({});
+}));
+
 api.get('/apps', ({ currentUser, query }, res) => {
-  const queryText = currentUser.$relatedQuery('apps').orderBy(query.order).toString();
+  const queryText = currentUser.$relatedQuery('apps').orderBy(query.orderBy).toString();
   const querySignature = Theron.sign(queryText, process.env['THERON_SECRET']);
 
   res.json({ queryText, querySignature });
 });
+
+api.get('/apps/name/:name/uniqueness', wrap(async ({ params, query }, res, next) => {
+  const { count } = await AppRecord.query().where('name', params.name).whereNot('id', query.id).count('id').first();
+
+  res.json(parseInt(count) === 0);
+}));

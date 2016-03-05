@@ -1,12 +1,21 @@
 import { Reducer } from 'redux';
-import { CONNECT_THERON } from '../actions/index';
+import { SIGNIN_SUCCESS, LOGOUT_SUCCESS } from '../actions/index';
 import { Theron } from '../../../lib/driver/driver';
 
-export const theron: Reducer = (state = null, action) => {
+export const theron: Reducer = (state = { ref: connectTheron() }, action) => {
   switch (action.type) {
-    case CONNECT_THERON:
-      return new Theron(action.url, action.options);
+    case SIGNIN_SUCCESS:
+      state.ref.setAuth({ headers: { 'X-JWT-TOKEN': action.token.toString() } });
+      return state;
+    case LOGOUT_SUCCESS:
+      state.ref.setAuth({});
+      return state;
     default:
       return state;
   }
 }
+
+function connectTheron() {
+  return new Theron('ws://0.0.0.0:9090/echo', { app: 'theron' });
+}
+

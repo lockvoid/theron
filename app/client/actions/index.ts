@@ -10,7 +10,12 @@ export const LOGOUT = 'TN:REQUEST_LOGOUT';
 export const LOGOUT_SUCCESS = 'TN:LOGOUT_SUCCESS';
 export const AUTH_TOKEN_KEY = 'TN:AUTH_TOKEN_KEY';
 
-export const CONNECT_THERON = 'TN:CONNECT_THERON';
+export const SELECT_APP = 'TN:SELECT_APP';
+export const CREATE_APP = 'TN:CREATE_APP';
+export const UPDATE_APP = 'TN:UPDATE_APP';
+export const DELETE_APP = 'TN:DELETE_APP';
+export const WATCH_APPS = 'TN:WATCH_APPS';
+export const UNWATCH_APPS = 'TN:UNWATCH_APPS';
 
 export function signin(email: string, password: string) {
   return { type: SIGNIN, email, password };
@@ -44,6 +49,26 @@ export function logoutSuccess(performRedirect: boolean) {
   return { type: LOGOUT_SUCCESS, performRedirect };
 }
 
-export function connectTheron(url: string, options: { app: string }) {
-  return { type: CONNECT_THERON, url, options };
+export function selectApp(id: number) {
+  return { type: SELECT_APP, id };
+}
+
+export function createApp(payload, resolve, reject) {
+  return { type: CREATE_APP, payload, resolve, reject };
+}
+
+export function updateApp(id, payload, resolve, reject) {
+  return { type: UPDATE_APP, id, payload, resolve, reject };
+}
+
+export function deleteApp(id: number) {
+  return { type: DELETE_APP, id };
+}
+
+export function watchApps() {
+  return { type: WATCH_APPS };
+}
+
+export function unwatchApps() {
+  return { type: UNWATCH_APPS };
 }

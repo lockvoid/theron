@@ -3,16 +3,22 @@ import { FetchError } from './fetch_error';
 export const DEFAULT_HEADERS: { [key: string]: string } = { 'Accept': 'application/json', 'Content-Type': 'application/json' };
 
 export class Api {
+  protected _headers: { [key: string]: string };
+
   static createToken(email: string, password: string) {
     const body = Api.stringify({ email, password });
 
-    return fetch('/api/tokens', { method: 'post', headers: DEFAULT_HEADERS, body }).then(Api.checkStatus).then(Api.parseResponse);
+    return fetch('/api/tokens', { method: 'POST', headers: DEFAULT_HEADERS, body }).then(Api.checkStatus).then(Api.parseResponse);
   }
 
   static createUser(email: string, password: string, name: string) {
     const body = Api.stringify({ email, password, name });
 
-    return fetch('/api/users', { method: 'post', headers: DEFAULT_HEADERS, body }).then(Api.checkStatus).then(Api.parseResponse);
+    return fetch('/api/users', { method: 'POST', headers: DEFAULT_HEADERS, body }).then(Api.checkStatus).then(Api.parseResponse);
+  }
+
+  static isEmailUniqueness(email: string, id: number = 0) {
+    return fetch(`/api/users/email/${email}/uniqueness?id=${id}`).then(Api.checkStatus).then(Api.parseResponse);
   }
 
   static async checkStatus(res) {
@@ -35,5 +41,25 @@ export class Api {
 
   static stringify(body) {
     return JSON.stringify(body);
+  }
+
+  constructor(protected _token: string) {
+    this._headers = Object.assign({}, DEFAULT_HEADERS, { 'X-JWT-Token': this._token });
+  }
+
+  isAppUniqueness(name: string, id: number = 0) {
+    return fetch(`/api/apps/name/${name}/uniqueness?id=${id}`, { headers: this._headers }).then(Api.checkStatus).then(Api.parseResponse);
+  }
+
+  createApp(payload): Promise<any> {
+    return fetch('/api/apps', { method: 'POST', headers: this._headers, body: Api.stringify(payload) }).then(Api.checkStatus).then(Api.parseResponse);
+  }
+
+  updateApp(id, payload): Promise<any> {
+    return fetch(`/api/apps/${id}`, { method: 'PATCH', headers: this._headers, body: Api.stringify(payload) }).then(Api.checkStatus).then(Api.parseResponse);
+  }
+
+  deleteApp(id): Promise<any> {
+    return fetch(`/api/apps/${id}`, { method: 'DELETE', headers: this._headers }).then(Api.checkStatus).then(Api.parseResponse);
   }
 }

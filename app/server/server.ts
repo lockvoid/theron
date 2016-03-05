@@ -107,7 +107,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // JWT-based auth
 
 app.use(wrap(async (req, res, next) => {
-  const token = req.body.token || req.query.token || req.headers['x-jwt-token'];
+  const token = req.body.token || req.query.token || req.headers['X-JWT-Token'.toLowerCase()];
 
   if (token) {
     try {
@@ -173,7 +173,7 @@ app.use(<express.ErrorRequestHandler>((err, req, res, next) => {
   }
 
   if (err instanceof ValidationError) {
-    return res.status(400).json({ reason: err.message });
+    return res.status(400).json({ reason: JSON.parse(err.message) });
   }
 
   next(err);
