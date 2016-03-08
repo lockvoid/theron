@@ -3,6 +3,7 @@
 import * as express from 'express';
 import * as pg from 'pg';
 import * as bodyParser from 'body-parser';
+import * as cookieParser from 'cookie-parser';
 import * as jwt from 'jsonwebtoken';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/server';
@@ -19,6 +20,10 @@ import { api } from './routes/api';
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Parse cookies
+
+app.use(cookieParser())
 
 // JWT-based auth
 
@@ -96,6 +101,14 @@ app.use(<express.ErrorRequestHandler>((err, req, res, next) => {
 }));
 
 // Render pages
+
+app.get('/', (req, res) => {
+  if (req.cookies.theronAuth === 'true') {
+    res.render('app');
+  } else {
+    res.render('home');
+  }
+});
 
 app.get('/*', (req, res) => {
   res.render('app');

@@ -19,11 +19,15 @@ function* createToken({ email, password }) {
 
 function* storeToken(tokenHash: string, performRedirect: boolean) {
   const token = auth.storeToken(tokenHash);
+  auth.createAuthCookie(token);
+
   yield put(signinSuccess(token, performRedirect));
 }
 
 function* purgeToken(performRedirect) {
   auth.purgeToken();
+  auth.purgeAuthCookie();
+
   yield put(logoutSuccess(performRedirect));
 }
 

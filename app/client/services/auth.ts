@@ -1,6 +1,7 @@
 import { AUTH_TOKEN_KEY } from '../actions/index';
 import { AuthToken } from '../lib/auth_token';
 import { FetchError } from '../lib/fetch_error';
+import { createCookie, clearCookie } from './cookie';
 
 export function canActivate(store, { authRequired } : { authRequired: boolean }) {
   return (nextState, replaceState, performState) => {
@@ -47,4 +48,12 @@ export function purgeToken() {
 
 export function expireToken(expiresIn: number): Promise<boolean> {
   return new Promise<boolean>(resolve => setTimeout(() => resolve(true), Math.min(expiresIn, 2147483647)));
+}
+
+export function createAuthCookie(token: AuthToken) {
+  createCookie('theronAuth', true, Date.now() + token.expiresIn);
+}
+
+export function purgeAuthCookie() {
+  clearCookie('theronAuth');
 }
