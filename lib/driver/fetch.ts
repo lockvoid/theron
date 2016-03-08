@@ -1,4 +1,4 @@
-/* @ifdef NODE */
+/* @ifdef NODE_BUILD */
 
 
 declare module NodeJS  {
@@ -11,7 +11,7 @@ global.fetch = require('node-fetch');
 
 /* @endif */
 
-/* @ifndef NODE */
+/* @ifndef NODE_BUILD */
 
 import 'whatwg-fetch';
 

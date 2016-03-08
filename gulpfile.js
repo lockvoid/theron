@@ -25,6 +25,8 @@ const watchTasks = gulp.parallel(watchServer, watchClient, watchCss, watchAssets
 
 gulp.task('default', gulp.series(clean, buildTasks, startHttp, watchTasks));
 
+gulp.task('release', gulp.series(clean, buildTasks, gulp.parallel(bundleClient, minifyCss), revPublic, repPublic));
+
 function clean() {
   return del('dist');
 }
@@ -54,7 +56,7 @@ const serverProject = ts.createProject('app/server/tsconfig.json', { typescript:
 
 function buildServer() {
   const source = ['{app/server,lib,db}/**/*.{ts,tsx}', 'typings/main.d.ts'];
-  const result = gulp.src(source).pipe(sourcemaps.init()).pipe(preprocess({ context: { NODE: true }, includeBase: __dirname })).pipe(ts(serverProject));
+  const result = gulp.src(source).pipe(sourcemaps.init()).pipe(preprocess({ context: { NODE_BUILD: true }, includeBase: __dirname })).pipe(ts(serverProject));
 
   return result.js.pipe(sourcemaps.write()).pipe(gulp.dest('dist/server'));
 }
@@ -78,12 +80,21 @@ function watchClient() {
   gulp.watch('{app/client,lib}/**/*.{ts,tsx}', buildClient);
 }
 
+function bundleClient() {
+  return jspm.bundleSFX('babel-polyfill + dist/client/app/client/main', 'dist/public/app.js', { minify: true, sourceMaps: true});
+}
+
 // Public
 
 function buildCss() {
   const manifests = ['public/css/**/*.css', '!public/css/**/_*.css'];
 
   return gulp.src(manifests).pipe(sourcemaps.init()).pipe(postcss([precss, autoprefixer])).pipe(sourcemaps.write()).pipe(gulp.dest('dist/public'));
+}
+
+
+function minifyCss() {
+  return gulp.src('dist/**/*.css').pipe(sourcemaps.init()).pipe(cssnano()).pipe(sourcemaps.write('.')).pipe(gulp.dest('dist'));
 }
 
 function watchCss() {
@@ -96,4 +107,12 @@ function copyAssets() {
 
 function watchAssets() {
   gulp.watch('public/{images,fonts}/**/*.{jpg,woff}', copyAssets);
+}
+
+function revPublic() {
+  return gulp.src('dist/public/**').pipe(rev()).pipe(gulp.dest('dist/public')).pipe(rev.manifest({ path: 'manifest.json' })).pipe(gulp.dest('dist/public'));
+}
+
+function repPublic() {
+  return gulp.src('dist/public/**/*.css').pipe(replace({ manifest: gulp.src('dist/public/manifest.json') })).pipe(gulp.dest('dist/public'))
 }

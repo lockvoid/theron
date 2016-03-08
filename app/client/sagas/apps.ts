@@ -94,14 +94,18 @@ function* streamApps() {
 
     const { theron } = yield select();
 
-    for (let next of wrapObservable(theron.ref.watch('/api/apps', { orderBy: 'name'}))) {
-      const { action } = yield race({ action: next, overwise: take(UNWATCH_APPS) });
+    try {
+      for (let next of wrapObservable(theron.ref.watch('/api/apps', { orderBy: 'name'}))) {
+        const { action } = yield race({ action: next, overwise: take(UNWATCH_APPS) });
 
-      if (action) {
-        yield put(Object.assign({}, action, { query: 'APPS' }));
-      } else {
-        break;
+        if (action) {
+          yield put(Object.assign({}, action, { query: 'APPS' }));
+        } else {
+          break;
+        }
       }
+    } catch(error) {
+      console.log(error);
     }
   }
 }

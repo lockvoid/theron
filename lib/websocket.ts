@@ -9,7 +9,7 @@ import { Subscription } from 'rxjs/Subscription';
 import 'rxjs/add/operator/filter';
 import 'rxjs/add/operator/map';
 
-/* @ifdef NODE */
+/* @ifdef NODE_BUILD */
 
 import * as WebSocket from 'ws';
 
