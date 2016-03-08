@@ -1,7 +1,7 @@
 export abstract class BaseError extends Error {
   public stack: any;
 
-  constructor(public code: number, public message: string) {
+  constructor(public code: number, public message: any) {
     super(message);
     this.stack = (<any>new Error(message)).stack;
   }

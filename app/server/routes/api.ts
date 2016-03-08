@@ -3,8 +3,10 @@ import * as express from 'express';
 import { Theron } from '../../../lib/driver/driver';
 import { UserRecord, AppRecord } from '../models';
 import { AuthError } from '../auth_error';
+import { NotFoundError } from '../not_found_error';
 import { wrap } from '../wrap_async';
 import { signUser } from '../utils/sign_user';
+import { createNotifier } from '../utils/create_notifier';
 
 export const api = express.Router();
 
@@ -47,7 +49,17 @@ api.post('/apps', wrap(async ({ currentUser, body }, res, next) => {
 }));
 
 api.patch('/apps/:appId', wrap(async ({ currentUser, params, body }, res, next) => {
-  const app = await currentUser.$relatedQuery('apps').patchAndFetchById(params.appId, body);
+  const app = await currentUser.$relatedQuery('apps').findById(params.appId);
+
+  if (!app) {
+    return next(new NotFoundError(404, 'App not found'));
+  }
+
+  if (body.db_url) {
+    await createNotifier(body.db_url);
+  }
+
+  await currentUser.$relatedQuery('apps').patchAndFetchById(params.appId, body);
 
   res.json({});
 }));
