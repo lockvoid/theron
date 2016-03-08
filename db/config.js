@@ -7,5 +7,15 @@ module.exports = exports.default = {
     migrations: {
       tableName: 'migrations'
     }
+  },
+
+  production: {
+    client: 'postgresql',
+
+    connection: process.env['POSTGRES_URL'],
+
+    migrations: {
+      tableName: 'migrations'
+    }
   }
 }
