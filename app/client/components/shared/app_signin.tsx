@@ -32,13 +32,9 @@ const stateToProps = (state) => {
 
 const dispatchToProps = (dispatch: Dispatch) => {
   return {
-    onSubmit: ({ email, password }) => {
-      setTimeout(() => {
-        dispatch(signin(email, password));
-      });
-
-      return new Promise(() => {});
-    }
+    onSubmit: ({ email, password }) => new Promise((resolve, reject) => {
+      dispatch(signin(email, password, resolve, reject));
+    }),
   }
 }
 

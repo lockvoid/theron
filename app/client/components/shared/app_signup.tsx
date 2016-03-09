@@ -44,13 +44,9 @@ const stateToProps = (state) => {
 
 const dispatchToProps = (dispatch: Dispatch) => {
   return {
-    onSubmit: ({ email, password, name }) => {
-      setTimeout(() => {
-        dispatch(signup(email, password, name));
-      });
-
-      return new Promise(() => {});
-    }
+    onSubmit: ({ email, password, name }) => new Promise((resolve, reject) => {
+      dispatch(signup(email, password, name, resolve, reject));
+    }),
   }
 }
 

@@ -1,5 +1,4 @@
 import { routeActions } from 'react-router-redux';
-import { stopSubmit } from 'redux-form';
 import { take, race, call, put, fork, select } from 'redux-saga/effects';
 import { SIGNIN, SIGNIN_SUCCESS, SIGNIN_FAILURE, SIGNUP, SIGNUP_SUCCESS, SIGNUP_FAILURE, LOGOUT, LOGOUT_SUCCESS, AUTH_TOKEN_KEY } from '../actions/index';
 import { signinSuccess, signinFailure, signupSuccess, signupFailure, logout, logoutSuccess } from '../actions/index';
@@ -96,23 +95,23 @@ function* redirectOnAuth() {
   }
 }
 
-function* submitSigninForm() {
+function* submitSigninForm(resolve, reject) {
   const { failure } = yield race({ success: take(SIGNIN_SUCCESS), failure: take(SIGNIN_FAILURE)});
 
   if (failure) {
-    yield put(stopSubmit('signin', { _error: failure.reason.message }));
+    typeof failure.reason.message === 'object' ? reject(failure.reason.message) : reject({ _error: failure.reason.message });
   } else {
-    yield put(stopSubmit('signin'));
+    resolve();
   }
 }
 
-function* submitSignupForm() {
+function* submitSignupForm(resolve, reject) {
   const { failure } = yield race({ success: take(SIGNUP_SUCCESS), failure: take(SIGNUP_FAILURE)});
 
   if (failure) {
-    yield put(stopSubmit('signup', { _error: failure.reason.message }));
+    typeof failure.reason.message === 'object' ? reject(failure.reason.message) : reject({ _error: failure.reason.message });
   } else {
-    yield put(stopSubmit('signup'));
+    resolve();
   }
 }
 
@@ -138,13 +137,13 @@ export function* authFlow() {
     const { signin, signup } = yield race({ signin: take(SIGNIN), signup: take(SIGNUP), overwise: take(SIGNIN_SUCCESS) });
 
     if (signin) {
-      yield fork(submitSigninForm);
+      yield fork(submitSigninForm, signin.resolve, signin.reject);
       yield call(createToken, signin);
       continue;
     }
 
     if (signup) {
-      yield fork(submitSignupForm);
+      yield fork(submitSignupForm, signup.resolve, signup.reject);
       yield call(createUser, signup);
       continue;
     }

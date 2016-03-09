@@ -18,8 +18,8 @@ export const DELETE_APP = 'TN:DELETE_APP';
 export const WATCH_APPS = 'TN:WATCH_APPS';
 export const UNWATCH_APPS = 'TN:UNWATCH_APPS';
 
-export function signin(email: string, password: string) {
-  return { type: SIGNIN, email, password };
+export function signin(email: string, password: string, resolve, reject) {
+  return { type: SIGNIN, email, password, resolve, reject };
 }
 
 export function signinSuccess(token: AuthToken, performRedirect: boolean) {
@@ -30,8 +30,8 @@ export function signinFailure(reason: string) {
   return { type: SIGNIN_FAILURE, reason };
 }
 
-export function signup(email: string, password: string, name: string) {
-  return { type: SIGNUP, email, password, name };
+export function signup(email: string, password: string, name: string, resolve, reject) {
+  return { type: SIGNUP, email, password, name, resolve, reject };
 }
 
 export function signupSuccess() {
