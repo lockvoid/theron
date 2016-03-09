@@ -14,7 +14,7 @@ export const SyncronizedArrayMeta = Record<SyncronizedArrayMetaProps>({
 
 export function syncronizeArray<T>(query: string, resetAction: string) {
   const rows = (state = List<T>(), action): List<T> => {
-    if (action.query !== query) {
+    if (action.query !== query && action.type !== resetAction) {
       return state;
     }
 
@@ -40,7 +40,7 @@ export function syncronizeArray<T>(query: string, resetAction: string) {
   }
 
   const meta = (state = new SyncronizedArrayMeta(), action) => {
-    if (action.query !== query) {
+    if (action.query !== query && action.type !== resetAction) {
       return state;
     }
 
