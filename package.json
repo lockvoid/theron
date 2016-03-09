@@ -11,6 +11,11 @@
   "scripts": {
     "postinstall": "bin/postinstall.sh"
   },
+  "cacheDirectories": [
+    "node_modules",
+    "jspm_packages",
+    "typings"
+  ],
   "dependencies": {
     "bcrypt": "^0.8.5",
     "body-parser": "^1.15.0",
