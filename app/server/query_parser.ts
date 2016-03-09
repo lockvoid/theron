@@ -6,7 +6,7 @@ export class QueryParser {
 
   constructor(protected _query: string) {
     this._parsed = new Promise((resolve, reject) => {
-      process.exec(`echo "${this._query}" | queryparser --json`, (error, stdout, stderr) => {
+      process.exec(`echo "${this._query}" | /* @echo BIN_PATH */queryparser --json`, (error, stdout, stderr) => {
         if (stderr) {
           return reject(stderr);
         }
