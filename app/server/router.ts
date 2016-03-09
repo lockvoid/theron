@@ -128,6 +128,7 @@ export class Router extends WebSocketSubject<any> {
 
       this.next({ id: message.id, type: REQUEST_SUCCESS, payload: { queryId } });
     } catch (error) {
+      console.log(error);
       this.next({ id: message.id, type: REQUEST_FAILURE, payload: { reason: error.toString() } });
     }
   }
