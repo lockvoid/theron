@@ -8,6 +8,10 @@ import { hmac } from './sha256';
 
 import './fetch';
 
+import 'rxjs/add/operator/do';
+import 'rxjs/add/operator/map';
+import 'rxjs/add/operator/scan';
+
 import * as qs from 'qs';
 
 export * from '../constants';
