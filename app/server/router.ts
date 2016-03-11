@@ -14,9 +14,12 @@ export class Router extends WebSocketSubject<any> {
   protected _queries = Map<string, any>();
   protected _tables = Map<string, any>();
   protected _diff: QueryDiff;
+  protected _aliveTimer: NodeJS.Timer;
 
   constructor(socket: WebSocket, protected _app, protected _db, protected _notifier) {
     super(socket);
+
+    this._aliveTimer = setInterval(() => socket.ping(null, null, true), 50000);
 
     this._diff = new QueryDiff(this._db);
 
@@ -64,6 +67,7 @@ export class Router extends WebSocketSubject<any> {
   }
 
   protected _reset() {
+    clearTimeout(this._aliveTimer);
     console.log('reset');
   }
 
