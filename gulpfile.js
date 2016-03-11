@@ -4,14 +4,18 @@ const autoprefixer = require('autoprefixer');
 const cprocess = require('child_process');
 const del = require('del');
 const dotenv = require('dotenv');
+const fs = require('fs');
 const gulp = require('gulp');
 const jspm = require('jspm');
 const precss = require('precss')
 const typescript = require('typescript');
 const babel = require('gulp-babel');
+const browserify = require('gulp-browserify');
 const cssnano = require('gulp-cssnano');
+const insert = require('gulp-insert');
 const postcss = require('gulp-postcss');
 const preprocess = require('gulp-preprocess');
+const rename = require('gulp-rename');
 const replace = require('gulp-rev-replace');
 const rev = require('gulp-rev');
 const sourcemaps = require('gulp-sourcemaps');
@@ -23,9 +27,11 @@ const buildTasks = gulp.parallel(buildServer, buildClient, buildCss, copyAssets)
 
 const watchTasks = gulp.parallel(watchServer, watchClient, watchCss, watchAssets);
 
+const releaseDriver = gulp.series(buildBrowserDriverCJS, buildBrowserDriverUMD);
+
 gulp.task('default', gulp.series(clean, buildTasks, startHttp, watchTasks));
 
-gulp.task('release', gulp.series(clean, buildTasks, gulp.parallel(bundleClient, minifyCss), revPublic, repPublic));
+gulp.task('release', gulp.series(clean, buildTasks, gulp.parallel(bundleClient, releaseDriver, minifyCss), revPublic, repPublic));
 
 function clean() {
   return del('dist');
@@ -92,7 +98,6 @@ function buildCss() {
   return gulp.src(manifests).pipe(sourcemaps.init()).pipe(postcss([precss, autoprefixer])).pipe(sourcemaps.write()).pipe(gulp.dest('dist/public'));
 }
 
-
 function minifyCss() {
   return gulp.src('dist/**/*.css').pipe(sourcemaps.init()).pipe(cssnano()).pipe(sourcemaps.write('.')).pipe(gulp.dest('dist'));
 }
@@ -116,3 +121,24 @@ function revPublic() {
 function repPublic() {
   return gulp.src('dist/public/**/*.css').pipe(replace({ manifest: gulp.src('dist/public/manifest.json') })).pipe(gulp.dest('dist/public'))
 }
+
+// Driver
+
+function buildBrowserDriverCJS() {
+  return jspm.bundleSFX('dist/client/lib/driver/driver', 'dist/driver/theron.js', { minify: true, format: 'cjs' });
+}
+
+function buildBrowserDriverUMD() {
+  const unwrapper = `
+    (function() {
+      var assign = Object.assign || function (target) {
+        for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } }
+      }
+
+      assign(window, Theron);
+    }());
+  `;
+
+  return gulp.src('dist/driver/theron.js').pipe(browserify({ standalone: 'Theron' })).pipe(insert.append(unwrapper)).pipe(rename('theron.umd.js')).pipe(gulp.dest('dist/driver'));
+}
+

@@ -67,6 +67,7 @@ app.set('view engine', 'js');
 // Serve assets
 
 app.use('/assets', express.static('./dist/public'));
+app.use('/bundles', express.static('./dist/driver'));
 
 app.use((req, res, next) => {
   req.path.indexOf("/assets") === 0 ? res.status(404).send(`Cannot GET ${req.path}`) : next();
