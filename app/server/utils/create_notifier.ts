@@ -15,7 +15,7 @@ export async function createNotifier(dbUrl) {
     await db.query(`
       create or replace function theron_notify_trigger() returns trigger as $$ begin
         case tg_op
-        when 'delete' then
+        when 'DELETE' then
           perform pg_notify('theron_watchers', tg_op || ',' || tg_table_name || ',' || old.id);
         else
           perform pg_notify('theron_watchers', tg_op || ',' || tg_table_name || ',' || new.id);
