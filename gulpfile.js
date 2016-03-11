@@ -33,6 +33,10 @@ gulp.task('default', gulp.series(clean, buildTasks, startHttp, watchTasks));
 
 gulp.task('release', gulp.series(clean, buildTasks, gulp.parallel(bundleClient, releaseDriver, minifyCss), revPublic, repPublic));
 
+function packageMeta() {
+  return JSON.parse(fs.readFileSync('./package.json'));
+}
+
 function clean() {
   return del('dist');
 }
@@ -125,10 +129,14 @@ function repPublic() {
 // Driver
 
 function buildBrowserDriverCJS() {
-  return jspm.bundleSFX('dist/client/lib/driver/driver', 'dist/driver/theron.js', { minify: true, format: 'cjs' });
+  const version = packageMeta()['version'];
+
+  return jspm.bundleSFX('dist/client/lib/driver/driver', `dist/driver/${version}/theron.js`, { minify: true, format: 'cjs' });
 }
 
 function buildBrowserDriverUMD() {
+  const version = packageMeta()['version'];
+
   const unwrapper = `
     (function() {
       var assign = Object.assign || function (target) {
@@ -139,6 +147,5 @@ function buildBrowserDriverUMD() {
     }());
   `;
 
-  return gulp.src('dist/driver/theron.js').pipe(browserify({ standalone: 'Theron' })).pipe(insert.append(unwrapper)).pipe(rename('theron.umd.js')).pipe(gulp.dest('dist/driver'));
+  return gulp.src(`dist/driver/${version}/theron.js`).pipe(browserify({ standalone: 'Theron' })).pipe(insert.append(unwrapper)).pipe(rename('theron.umd.js')).pipe(gulp.dest(`dist/driver/${version}`));
 }
-
