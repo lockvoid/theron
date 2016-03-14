@@ -36,16 +36,22 @@ export class Theron extends RescueWebSocketSubject<any> {
     return hmac(secretKey, queryText);
   }
 
-  static prefixAction(action, queryName: string) {
-    return Object.assign({}, action, { type: Theron.prefixActionType(action.type, queryName) })
-  }
+  static constructUrl(url: string, options: TheronOptions) {
+    switch (url) {
+      case 'https://therondb.com':
+        url = 'wss://theron-production.herokuapp.com';
+        break;
 
-  static prefixActionType(actionType: string, queryName: string): string {
-    return `${queryName.toUpperCase()}:${actionType}`;
+      case 'http://therondb.com':
+        url = 'ws://theron-production.herokuapp.com';
+        break;
+    }
+
+    return `${url}?app=${options.app}`;
   }
 
   constructor(url: string, options: TheronOptions) {
-    super(`${url}?app=${options.app}`);
+    super(Theron.constructUrl(url, options));
 
     this.setAuth();
     this.subscribe(this._cache);
