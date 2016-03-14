@@ -7,6 +7,7 @@ const dotenv = require('dotenv');
 const fs = require('fs');
 const gulp = require('gulp');
 const jspm = require('jspm');
+const path = require('path')
 const precss = require('precss')
 const typescript = require('typescript');
 const babel = require('gulp-babel');
@@ -18,6 +19,7 @@ const preprocess = require('gulp-preprocess');
 const rename = require('gulp-rename');
 const replace = require('gulp-rev-replace');
 const rev = require('gulp-rev');
+const s3 = require('gulp-s3');
 const sourcemaps = require('gulp-sourcemaps');
 const ts = require('gulp-typescript');
 
@@ -27,11 +29,13 @@ const buildTasks = gulp.parallel(buildServer, buildClient, buildCss, copyAssets)
 
 const watchTasks = gulp.parallel(watchServer, watchClient, watchCss, watchAssets);
 
-const releaseDriver = gulp.series(buildBrowserDriverCJS, buildBrowserDriverUMD);
+const bundleDriver = gulp.series(buildBrowserDriverCJS, buildBrowserDriverUMD);
 
 gulp.task('default', gulp.series(clean, buildTasks, startHttp, watchTasks));
 
-gulp.task('release', gulp.series(clean, buildTasks, gulp.parallel(bundleClient, releaseDriver, minifyCss), revPublic, repPublic));
+gulp.task('release', gulp.series(clean, buildTasks, gulp.parallel(bundleClient, bundleDriver, minifyCss), revPublic, repPublic));
+
+gulp.task('publish', publishDriver);
 
 function packageMeta() {
   return JSON.parse(fs.readFileSync('./package.json'));
@@ -148,4 +152,10 @@ function buildBrowserDriverUMD() {
   `;
 
   return gulp.src(`dist/driver/${version}/theron.js`).pipe(browserify({ standalone: 'Theron' })).pipe(insert.append(unwrapper)).pipe(rename('theron.umd.js')).pipe(gulp.dest(`dist/driver/${version}`));
+}
+
+function publishDriver() {
+  const credentials = { key: process.env.S3_PUBLIC_KEY, secret: process.env.S3_SECRET_KEY, bucket: process.env.S3_BUCKET, region: process.env.S3_REGION };
+
+  return gulp.src('./dist/driver/**').pipe(rename(source => source.dirname = path.join('bundles', source.dirname))).pipe(s3(credentials));
 }

@@ -16,11 +16,10 @@ const entry = (
       <Route path="/" component={AppMain}>
         <Route path="signin" component={AppSignin} onEnter={auth.canActivate(store, { authRequired: false })} />
         <Route path="signup" component={AppSignup} onEnter={auth.canActivate(store, { authRequired: false })} />
+        <Route path="logout" component={AppLogout} />
 
         <Route component={AppProtected} onEnter={auth.canActivate(store, { authRequired: true })}>
           <IndexRedirect to="/apps" />
-
-          <Route path="logout" component={AppLogout} />
 
           <Route path="apps">
             <IndexRoute component={RedirectToFirstApp} />
@@ -35,4 +34,3 @@ const entry = (
 );
 
 ReactDOM.render(entry, document.getElementById('app'));
-
