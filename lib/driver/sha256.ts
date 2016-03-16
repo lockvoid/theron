@@ -233,12 +233,19 @@ function uint8ToString(u8a){
   return c.join("");
 }
 
+var HEX_CHARS = new Array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f');
+
+function toHex(charCode) {
+  return "" + HEX_CHARS[charCode >> 4] + HEX_CHARS[charCode & 0x0f];
+}
+
 function hexEncode(str){
   var result = '';
-    for (var i=0; i<str.length; i++) {
-      result += str.charCodeAt(i).toString(16);
-    }
-    return result;
+
+  for (var i=0; i<str.length; i++) {
+    result += toHex(str.charCodeAt(i));
+  }
+  return result;
 }
 
 export const sha256 = function(m) {
