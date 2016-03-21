@@ -103,6 +103,10 @@ app.use(<express.ErrorRequestHandler>((err, req, res, next) => {
 
 // Render pages
 
+app.get('/home', (req, res) => {
+  res.render('home', { isAuth: req.cookies.figureAuth === 'true' });
+});
+
 app.get('/', (req, res) => {
   if (req.cookies.theronAuth === 'true') {
     res.render('app');

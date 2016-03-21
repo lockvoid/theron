@@ -15,7 +15,7 @@ html {
 }
 
 body {
-  color: color(white b(95%));
+  color: color(black w(10%));
   font-family: OpenSans, $fonts;
   font-size: 13px;
   font-weight: 400;
@@ -112,8 +112,27 @@ code {
   white-space: nowrap;
 }
 
+iframe {
+  border: 0;
+}
+
 wrapper {
   display: block;
+}
+
+figure.video {
+  height: 0;
+  margin: 0;
+  padding-bottom: 56.25%;
+  position: relative;
+
+  iframe {
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+  }
 }
 
 input[type="text"], input[type="search"], input[type="email"], input[type="password"] {

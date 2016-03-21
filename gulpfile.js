@@ -22,20 +22,19 @@ const rev = require('gulp-rev');
 const s3 = require('gulp-s3');
 const sourcemaps = require('gulp-sourcemaps');
 const ts = require('gulp-typescript');
+const uglify = require('gulp-uglify');
 
 dotenv.config({ silent: true });
 
-const buildTasks = gulp.parallel(buildServer, buildClient, buildCss, copyAssets);
+const buildTasks = gulp.parallel(buildServer, buildClient, buildCss, buildJs, copyAssets);
 
-const watchTasks = gulp.parallel(watchServer, watchClient, watchCss, watchAssets);
+const watchTasks = gulp.parallel(watchServer, watchClient, watchCss, watchJs, watchAssets);
 
 const bundleDriver = gulp.series(buildBrowserDriverCJS, buildBrowserDriverUMD);
 
 gulp.task('default', gulp.series(clean, buildTasks, startHttp, watchTasks));
 
-gulp.task('release', gulp.series(clean, buildTasks, gulp.parallel(bundleClient, bundleDriver, minifyCss), revPublic, repPublic));
-
-gulp.task('publish', publishDriver);
+gulp.task('release', gulp.series(clean, buildTasks, gulp.parallel(bundleClient, bundleDriver, minifyCss, minifyJs), revPublic, repPublic));
 
 function packageMeta() {
   return JSON.parse(fs.readFileSync('./package.json'));
@@ -107,11 +106,23 @@ function buildCss() {
 }
 
 function minifyCss() {
-  return gulp.src('dist/**/*.css').pipe(sourcemaps.init()).pipe(cssnano()).pipe(sourcemaps.write('.')).pipe(gulp.dest('dist'));
+  return gulp.src('dist/public/**/*.css').pipe(sourcemaps.init()).pipe(cssnano()).pipe(sourcemaps.write('.')).pipe(gulp.dest('dist/public'));
 }
 
 function watchCss() {
   gulp.watch('public/css/**/*.css', buildCss);
+}
+
+function buildJs() {
+  return gulp.src('public/js/**/*.js').pipe(sourcemaps.init()).pipe(babel({ presets: ['es2015'] })).pipe(sourcemaps.write()).pipe(gulp.dest('dist/public'));
+}
+
+function minifyJs() {
+  return gulp.src('dist/public/**/*.js').pipe(uglify()).pipe(gulp.dest('dist/public'));
+}
+
+function watchJs() {
+  gulp.watch('public/js/**/*.js', buildJs);
 }
 
 function copyAssets() {
