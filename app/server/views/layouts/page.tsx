@@ -8,6 +8,8 @@ export const Page = ({ title = null, children = null, className = null }) => (
       <title>{title && `${title} - `}Theron</title>
 
       <base href="/" />
+
+      <meta name="description" content="Reactive storage for realtime apps." />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
       <link rel="stylesheet" media="screen" href={assetPath('app.css')} />
