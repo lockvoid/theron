@@ -33,7 +33,7 @@
     "qs": "^6.1.0",
     "react": "^0.14.7",
     "react-dom": "^0.14.7",
-    "rxjs": "^5.0.0-beta.2",
+    "rxjs": "^5.0.0-beta.5",
     "serve-static": "^1.10.2",
     "ws": "^1.0.1"
   },
@@ -60,7 +60,7 @@
     "jspm": "^0.16.19",
     "precss": "^1.4.0",
     "preprocess": "^3.1.0",
-    "typescript": "^1.9.0-dev.20160210",
+    "typescript": "^1.8.9",
     "typings": "^0.6.1"
   },
   "jspm": {
@@ -78,7 +78,7 @@
       "redux-form": "npm:redux-form@^4.2.0",
       "redux-saga": "npm:redux-saga@^0.9.1",
       "redux-thunk": "npm:redux-thunk@^1.0.3",
-      "rxjs": "npm:rxjs@^5.0.0-beta.2",
+      "rxjs": "npm:rxjs@^5.0.0-beta.5",
       "whatwg-fetch": "npm:whatwg-fetch@^0.11.0"
     },
     "devDependencies": {}

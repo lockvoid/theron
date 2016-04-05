@@ -1,6 +1,6 @@
 import { Subject } from 'rxjs/Subject';
 import { Subscriber } from 'rxjs/Subscriber';
-import { Subscription } from 'rxjs/Subscription';
+import { AnonymousSubscription } from 'rxjs/Subscription';
 import { OrderedMap } from 'immutable';
 
 import { ROW_ADDED, ROW_CHANGED, ROW_MOVED, ROW_REMOVED, BEGIN_TRANSACTION, COMMIT_TRANSACTION, ROLLBACK_TRANSACTION } from '../constants';
@@ -29,7 +29,7 @@ export class ReplayCache extends Subject<any> {
     super._next(action);
   }
 
-  protected _subscribe(subscriber: Subscriber<any>): Subscription | Function | void {
+  protected _subscribe(subscriber: Subscriber<any>): AnonymousSubscription | Function | void {
     this._cache.forEach(action => {
       if (subscriber.isUnsubscribed) {
         return false;
