@@ -30,14 +30,20 @@ const buildTasks = gulp.parallel(buildServer, buildClient, buildCss, buildJs, co
 
 const watchTasks = gulp.parallel(watchServer, watchClient, watchCss, watchJs, watchAssets);
 
-const bundleDriver = gulp.series(buildBrowserDriverCJS, buildBrowserDriverUMD);
+gulp.task('build.npm.driver', gulp.series(packageBrowserDriver, packageNodeDriver, packageDriverMeta));
+
+gulp.task('build.cdn.driver', gulp.series(buildBrowserDriver, buildGlobalBrowserDriver));
+
+gulp.task('publish.cdn.driver', publishDriverToCDN);
+
+gulp.task('publish.npm.driver', publishDriverToNPM);
 
 gulp.task('default', gulp.series(clean, buildTasks, startHttp, watchTasks));
 
-gulp.task('release', gulp.series(clean, buildTasks, gulp.parallel(bundleClient, bundleDriver, minifyCss, minifyJs), revPublic, repPublic));
+gulp.task('release', gulp.series(clean, buildTasks, gulp.parallel(bundleClient, 'build.npm.driver', 'build.cdn.driver', minifyCss, minifyJs), revPublic, repPublic));
 
 function packageMeta() {
-  return JSON.parse(fs.readFileSync('./package.json'));
+  return JSON.parse(fs.readFileSync('./lib/driver/package.json'));
 }
 
 function clean() {
@@ -71,7 +77,7 @@ function buildServer() {
   const source = ['{app/server,lib,db}/**/*.{ts,tsx}', 'typings/main.d.ts'];
   const result = gulp.src(source).pipe(sourcemaps.init()).pipe(preprocess({ context: { NODE_BUILD: true }, includeBase: __dirname })).pipe(ts(serverProject));
 
-  return result.js.pipe(sourcemaps.write()).pipe(gulp.dest('dist/server'));
+  return result.js.pipe(babel({ plugins: ['transform-es2015-parameters'] })).pipe(sourcemaps.write()).pipe(gulp.dest('dist/server'));
 }
 
 function watchServer() {
@@ -143,13 +149,63 @@ function repPublic() {
 
 // Driver
 
-function buildBrowserDriverCJS() {
-  const version = packageMeta()['version'];
+const packageBuilder = new jspm.Builder();
 
-  return jspm.bundleSFX('dist/client/lib/driver/driver', `dist/driver/${version}/theron.js`, { minify: true, format: 'cjs' });
+packageBuilder.config({
+  packages: {
+    'rxjs': {
+      defaultExtension: 'js',
+    }
+  },
+
+  paths: {
+    '*': '*.js',
+  },
+
+  meta: {
+    'rxjs/*': {
+      build: false,
+    },
+
+    'immutable': {
+      build: false,
+    },
+
+    'node-fetch': {
+      build: false,
+    },
+
+    'ws': {
+      build: false,
+    }
+  },
+});
+
+function packageBrowserDriver() {
+  return packageBuilder.buildStatic('dist/client/lib/driver/driver', `dist/driver/npm/lib/theron.js`, { minify: true, format: 'cjs' });
 }
 
-function buildBrowserDriverUMD() {
+function packageNodeDriver() {
+  return packageBuilder.buildStatic('dist/server/lib/driver/driver', `dist/driver/npm/lib/theron-node.js`, { minify: true, format: 'cjs' });
+}
+
+function packageDriverMeta() {
+  const meta = [
+    'README.md',
+    'package.json',
+    'typings/theron.d.ts',
+  ];
+
+  return gulp.src([`lib/driver/{${meta.join(',')}}`]).pipe(gulp.dest(`dist/driver/npm`))
+}
+
+function buildBrowserDriver() {
+  const version = packageMeta()['version'];
+
+  return jspm.bundleSFX(`dist/client/lib/driver/driver`, `dist/driver/cdn/${version}/theron.js`, { minify: true, format: 'cjs' });
+}
+
+function buildGlobalBrowserDriver() {
   const version = packageMeta()['version'];
 
   const unwrapper = `
@@ -162,11 +218,15 @@ function buildBrowserDriverUMD() {
     }());
   `;
 
-  return gulp.src(`dist/driver/${version}/theron.js`).pipe(browserify({ standalone: 'Theron' })).pipe(insert.append(unwrapper)).pipe(rename('theron.umd.js')).pipe(gulp.dest(`dist/driver/${version}`));
+  return gulp.src(`dist/driver/cdn/${version}/theron.js`).pipe(browserify({ standalone: 'Theron' })).pipe(insert.append(unwrapper)).pipe(rename('theron.umd.js')).pipe(gulp.dest(`dist/driver/cdn/${version}`));
 }
 
-function publishDriver() {
+function publishDriverToNPM(done) {
+  process.chdir('dist/driver/npm'); cprocess.spawn('npm', ['publish'], { stdio: 'inherit' }).on('close', done);
+}
+
+function publishDriverToCDN() {
   const credentials = { key: process.env.S3_PUBLIC_KEY, secret: process.env.S3_SECRET_KEY, bucket: process.env.S3_BUCKET, region: process.env.S3_REGION };
 
-  return gulp.src('./dist/driver/**').pipe(rename(source => source.dirname = path.join('bundles', source.dirname))).pipe(s3(credentials));
+  return gulp.src('./dist/driver/cdn/**').pipe(rename(source => source.dirname = path.join('bundles', source.dirname))).pipe(s3(credentials));
 }
