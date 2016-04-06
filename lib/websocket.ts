@@ -93,7 +93,7 @@ export class WebSocketSubject<T> extends Subject<T> {
       }
 
       this._socket.onerror = (error) => {
-        console.log(`Theron: ${error.message}`);
+        console.log(`Theron: ${(<any>error).message}`);
         this.error(error);
       }
 
