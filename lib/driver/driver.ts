@@ -39,11 +39,13 @@ export class Theron extends RescueWebSocketSubject<any> {
   static constructUrl(url: string, options: TheronOptions) {
     switch (url) {
       case 'https://therondb.com':
-        url = 'wss://theron-production.herokuapp.com';
+      case 'https://therondb.com/':
+        url = 'wss://theron-production.herokuapp.com/';
         break;
 
       case 'http://therondb.com':
-        url = 'ws://theron-production.herokuapp.com';
+      case 'http://therondb.com/':
+        url = 'ws://theron-production.herokuapp.com/';
         break;
     }
 

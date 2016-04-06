@@ -1,6 +1,5 @@
 /* @ifdef NODE_BUILD */
 
-
 declare module NodeJS  {
   interface Global {
     fetch: Function;
