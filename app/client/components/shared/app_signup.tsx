@@ -1,7 +1,8 @@
 import * as React from 'react';
 
-import { Link } from 'react-router';
 import { Dispatch } from 'redux';
+import { Link } from 'react-router';
+import { MapStateToProps, MapDispatchToPropsFunction } from 'react-redux';
 import { reduxForm } from 'redux-form';
 import { signup } from '../../actions/index';
 import { combineValidators, requiredValidator, emailValidator, passwordValidator, uniquenessValidator } from '../../utils/validators';
@@ -38,11 +39,11 @@ const formConfig = {
   asyncValidate: uniquenessValidator('email', email => Api.isEmailUniqueness(email)),
 }
 
-const stateToProps = (state) => {
+const stateToProps: MapStateToProps = (state) => {
   return state.auth;
 }
 
-const dispatchToProps = (dispatch: Dispatch) => {
+const dispatchToProps: MapDispatchToPropsFunction = (dispatch: Dispatch) => {
   return {
     onSubmit: ({ email, password, name }) => new Promise((resolve, reject) => {
       dispatch(signup(email, password, name, resolve, reject));

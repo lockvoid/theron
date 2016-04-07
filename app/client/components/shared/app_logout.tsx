@@ -1,11 +1,11 @@
 import * as React from 'react';
 
-import { connect } from 'react-redux';
+import { connect, MapDispatchToPropsFunction } from 'react-redux';
 import { Dispatch } from 'redux';
 
 import { logout } from '../../actions/index';
 
-const mapDispatchToProps = (dispatch: Dispatch) => {
+const mapDispatchToProps: MapDispatchToPropsFunction = (dispatch: Dispatch) => {
   return {
     tryLogout: () => {
       dispatch(logout());

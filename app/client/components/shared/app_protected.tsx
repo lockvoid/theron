@@ -1,12 +1,12 @@
 import * as React from 'react';
 
-import { connect, MapDispatchToPropsObject } from 'react-redux';
+import { connect, MapStateToProps, MapDispatchToPropsObject } from 'react-redux';
 import { Dispatch } from 'redux';
 import { AppHeader } from './app_header';
 import { AppSpinner } from '../../../../lib/components/app_spinner';
 import { watchApps, unwatchApps } from '../../actions/index';
 
-const stateToProps = (state) => {
+const stateToProps: MapStateToProps = (state) => {
   return state;
 }
 

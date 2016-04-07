@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { Link } from 'react-router';
 import { Dispatch } from 'redux';
+import { MapStateToProps, MapDispatchToPropsFunction } from 'react-redux';
 import { reduxForm } from 'redux-form';
 import { signin } from '../../actions/index';
 import { combineValidators, requiredValidator, emailValidator, passwordValidator } from '../../utils/validators';
@@ -26,11 +27,11 @@ const formConfig = {
   }),
 }
 
-const stateToProps = (state) => {
+const stateToProps: MapStateToProps = (state) => {
   return state.auth;
 }
 
-const dispatchToProps = (dispatch: Dispatch) => {
+const dispatchToProps: MapDispatchToPropsFunction = (dispatch: Dispatch) => {
   return {
     onSubmit: ({ email, password }) => new Promise((resolve, reject) => {
       dispatch(signin(email, password, resolve, reject));

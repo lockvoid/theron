@@ -13,7 +13,7 @@ System.config({
     "babel-runtime": "npm:babel-runtime@5.8.35",
     "core-js": "npm:core-js@1.2.6",
     "immutable": "npm:immutable@3.7.6",
-    "jwt-decode": "npm:jwt-decode@1.5.1",
+    "jwt-decode": "npm:jwt-decode@2.0.1",
     "qs": "npm:qs@6.1.0",
     "react": "npm:react@0.14.8",
     "react-dom": "npm:react-dom@0.14.8",
@@ -89,7 +89,7 @@ System.config({
     "npm:babel-polyfill@6.7.4": {
       "babel-regenerator-runtime": "npm:babel-regenerator-runtime@6.5.0",
       "babel-runtime": "npm:babel-runtime@5.8.38",
-      "core-js": "npm:core-js@2.2.1",
+      "core-js": "npm:core-js@2.2.2",
       "process": "github:jspm/nodelibs-process@0.1.2"
     },
     "npm:babel-regenerator-runtime@6.5.0": {
@@ -123,7 +123,7 @@ System.config({
       "process": "github:jspm/nodelibs-process@0.1.2",
       "systemjs-json": "github:systemjs/plugin-json@0.1.0"
     },
-    "npm:core-js@2.2.1": {
+    "npm:core-js@2.2.2": {
       "fs": "github:jspm/nodelibs-fs@0.1.2",
       "path": "github:jspm/nodelibs-path@0.1.0",
       "process": "github:jspm/nodelibs-process@0.1.2",
@@ -185,7 +185,7 @@ System.config({
       "process": "github:jspm/nodelibs-process@0.1.2"
     },
     "npm:isomorphic-fetch@2.2.1": {
-      "node-fetch": "npm:node-fetch@1.4.1",
+      "node-fetch": "npm:node-fetch@1.5.0",
       "whatwg-fetch": "npm:whatwg-fetch@0.11.0"
     },
     "npm:jstransform@10.1.0": {
@@ -196,8 +196,7 @@ System.config({
       "process": "github:jspm/nodelibs-process@0.1.2",
       "source-map": "npm:source-map@0.1.31"
     },
-    "npm:jwt-decode@1.5.1": {
-      "Base64": "npm:Base64@0.1.4",
+    "npm:jwt-decode@2.0.1": {
       "fs": "github:jspm/nodelibs-fs@0.1.2",
       "systemjs-json": "github:systemjs/plugin-json@0.1.0"
     },
@@ -211,7 +210,7 @@ System.config({
       "stream": "github:jspm/nodelibs-stream@0.1.0",
       "util": "github:jspm/nodelibs-util@0.1.0"
     },
-    "npm:node-fetch@1.4.1": {
+    "npm:node-fetch@1.5.0": {
       "buffer": "github:jspm/nodelibs-buffer@0.1.0",
       "encoding": "npm:encoding@0.1.12",
       "http": "github:jspm/nodelibs-http@1.7.1",
@@ -219,6 +218,7 @@ System.config({
       "is-stream": "npm:is-stream@1.0.1",
       "stream": "github:jspm/nodelibs-stream@0.1.0",
       "url": "github:jspm/nodelibs-url@0.1.0",
+      "util": "github:jspm/nodelibs-util@0.1.0",
       "zlib": "github:jspm/nodelibs-zlib@0.1.0"
     },
     "npm:pako@0.2.8": {

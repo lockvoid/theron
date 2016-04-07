@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { Dispatch } from 'redux';
+import { MapStateToProps, MapDispatchToPropsFunction } from 'react-redux';
 import { reduxForm } from 'redux-form';
 import { combineValidators, requiredValidator, slugValidator, uniquenessValidator } from '../../utils/validators';
 import { selectApp, updateApp, deleteApp } from '../../actions/index';
@@ -29,13 +30,13 @@ const formConfig = {
   asyncValidate: uniquenessValidator('name', (name, { api, app: { id } }) => api.isAppUniqueness(name, id)),
 }
 
-const mapStateToProps = ({ auth: { api }, apps }, { params }) => {
+const mapStateToProps: MapStateToProps = ({ auth: { api }, apps }, { params }) => {
   const app = apps.rows.find(app => app.id === params.appId);
 
   return { api, app, initialValues: app };
 }
 
-const mapDispatchToProps = (dispatch: Dispatch, { params }) => {
+const mapDispatchToProps: MapDispatchToPropsFunction = (dispatch: Dispatch, { params }) => {
   return {
     selectApp: (id: number = parseInt(params.appId)) => {
       dispatch(selectApp(id));
