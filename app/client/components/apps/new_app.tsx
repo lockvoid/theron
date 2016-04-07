@@ -5,7 +5,7 @@ import { MapStateToProps, MapDispatchToPropsFunction } from 'react-redux';
 import { reduxForm } from 'redux-form';
 import { combineValidators, requiredValidator, slugValidator, uniquenessValidator } from '../../utils/validators';
 import { createApp } from '../../actions/index';
-import { FieldBox } from '../shared/field_box';
+import { FieldBox } from '../shared/fieldbox';
 import { SubmitButton } from '../shared/submit_button';
 
 const formConfig = {

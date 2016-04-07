@@ -1,4 +1,4 @@
-import { DbError } from '../db_error';
+import { DbError } from '../lib/errors/db_error';
 
 const pg = require('pg-promise')();
 

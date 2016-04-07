@@ -1,8 +1,12 @@
+if (process.env['NODE_ENV'] !== 'production') {
+  require('dotenv').config({ path: '../.env', silent: true });
+}
+
 module.exports = exports.default = {
   development: {
     client: 'postgresql',
 
-    connection: 'postgres://localhost/theron_development',
+    connection: process.env['DATABASE_URL'],
 
     migrations: {
       tableName: 'migrations'
@@ -12,7 +16,7 @@ module.exports = exports.default = {
   production: {
     client: 'postgresql',
 
-    connection: process.env['POSTGRES_URL'],
+    connection: process.env['DATABASE_URL'],
 
     migrations: {
       tableName: 'migrations'

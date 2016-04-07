@@ -1,4 +1,4 @@
-import { FetchError } from './fetch_error';
+import { FetchError } from './errors/fetch_error';
 
 export const DEFAULT_HEADERS: { [key: string]: string } = { 'Accept': 'application/json', 'Content-Type': 'application/json' };
 

@@ -12,7 +12,7 @@ export const app = express();
 
 import { ValidationError } from 'objection';
 import { UserRecord } from './models/user';
-import { BaseError } from '../../lib/base_error';
+import { BaseError } from '../../lib/errors/base_error';
 import { wrap } from './wrap_async';
 import { api } from './routes/api';
 
@@ -104,7 +104,7 @@ app.use(<express.ErrorRequestHandler>((err, req, res, next) => {
 // Render pages
 
 app.get('/home', (req, res) => {
-  res.render('home', { isAuth: req.cookies.figureAuth === 'true' });
+  res.render('home', { isAuth: req.cookies.theronAuth === 'true' });
 });
 
 app.get('/', (req, res) => {

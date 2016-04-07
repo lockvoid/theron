@@ -2,8 +2,8 @@ import * as express from 'express';
 
 import { Theron } from '../../../lib/driver/driver';
 import { UserRecord, AppRecord } from '../models';
-import { AuthError } from '../auth_error';
-import { NotFoundError } from '../not_found_error';
+import { AuthError } from '../lib/errors/auth_error';
+import { NotFoundError } from '../lib/errors/not_found_error';
 import { wrap } from '../wrap_async';
 import { signUser } from '../utils/sign_user';
 import { createNotifier } from '../utils/create_notifier';

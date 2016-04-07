@@ -1,6 +1,6 @@
 import { AUTH_TOKEN_KEY } from '../actions/index';
 import { AuthToken } from '../lib/auth_token';
-import { FetchError } from '../lib/fetch_error';
+import { FetchError } from '../lib/errors/fetch_error';
 import { createCookie, clearCookie } from './cookie';
 
 export function canActivate(store, { authRequired } : { authRequired: boolean }) {

@@ -6,7 +6,7 @@ import { MapStateToProps, MapDispatchToPropsFunction } from 'react-redux';
 import { reduxForm } from 'redux-form';
 import { signup } from '../../actions/index';
 import { combineValidators, requiredValidator, emailValidator, passwordValidator, uniquenessValidator } from '../../utils/validators';
-import { FieldBox, FieldError } from './field_box';
+import { FieldBox, FieldError } from './fieldbox';
 import { SubmitButton } from './submit_button';
 import { AppSpinner } from '../../../../lib/components/app_spinner';
 import { Api } from '../../lib/api';
