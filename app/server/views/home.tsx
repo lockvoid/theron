@@ -113,14 +113,6 @@ export default ({ isAuth }) => (
             <li>
               <a href="mailto:support@therondb.com">Contact Us</a>
             </li>
-
-            <li>
-              <a href="/policy/terms">Terms of Service</a>
-            </li>
-
-            <li>
-              <a href="/policy/privacy">Privacy Policy</a>
-            </li>
           </ul>
         </wrapper>
       </footer>
