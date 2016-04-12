@@ -33,20 +33,27 @@ export class QueryDiff extends Subject<any> {
         };
 
         let prevOffset = prevRows.offset(row.id);
+        let prevRow = prevRows.rows[prevOffset];
 
         if (prevOffset === undefined) {
           this._finalNext({ id: queryId, type: ROW_ADDED, payload });
           return true;
         }
 
-        if (this._formatTime(row.updated_at) !== this._formatTime(prevRows.rows[prevOffset].updated_at)) {
-          this._finalNext({ id: queryId, type: ROW_CHANGED, payload });
-          return true;
-        }
+        Object.keys(row).some(key => {
+          if (this._castValue(row[key]) !== this._castValue(prevRow[key])) {
+            this._finalNext({ id: queryId, type: ROW_CHANGED, payload });
+            return true;
+          }
+        });
+
+        //if (this._formatTime(row.updated_at) !== this._formatTime(prevRows.rows[prevOffset].updated_at)) {
+        //  this._finalNext({ id: queryId, type: ROW_CHANGED, payload });
+        //  return true;
+        //}
 
         if (prevOffset !== offset) {
           this._finalNext({ id: queryId, type: ROW_MOVED, payload });
-          return true;
         }
       });
 
@@ -91,7 +98,7 @@ export class QueryDiff extends Subject<any> {
     }
   }
 
-  protected _formatTime(time: any): string {
-    return time && time.toString();
+  protected _castValue(value: any): string {
+    return value && value.toString();
   }
 }
