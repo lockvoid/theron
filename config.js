@@ -17,14 +17,14 @@ System.config({
     "qs": "npm:qs@6.1.0",
     "react": "npm:react@0.14.8",
     "react-dom": "npm:react-dom@0.14.8",
-    "react-redux": "npm:react-redux@4.4.1",
-    "react-router": "npm:react-router@2.0.1",
+    "react-redux": "npm:react-redux@4.4.4",
+    "react-router": "npm:react-router@2.1.1",
     "react-router-redux": "npm:react-router-redux@3.0.0",
-    "redux": "npm:redux@3.3.1",
+    "redux": "npm:redux@3.4.0",
     "redux-form": "npm:redux-form@4.2.2",
     "redux-saga": "npm:redux-saga@0.9.5",
     "redux-thunk": "npm:redux-thunk@1.0.3",
-    "rxjs": "npm:rxjs@5.0.0-beta.5",
+    "rxjs": "npm:rxjs@5.0.0-beta.6",
     "whatwg-fetch": "npm:whatwg-fetch@0.11.0",
     "github:jspm/nodelibs-assert@0.1.0": {
       "assert": "npm:assert@1.3.0"
@@ -69,12 +69,6 @@ System.config({
     },
     "github:jspm/nodelibs-zlib@0.1.0": {
       "browserify-zlib": "npm:browserify-zlib@0.1.4"
-    },
-    "npm:amdefine@1.0.0": {
-      "fs": "github:jspm/nodelibs-fs@0.1.2",
-      "module": "github:jspm/nodelibs-module@0.1.0",
-      "path": "github:jspm/nodelibs-path@0.1.0",
-      "process": "github:jspm/nodelibs-process@0.1.2"
     },
     "npm:asap@2.0.3": {
       "domain": "github:jspm/nodelibs-domain@0.1.0",
@@ -139,15 +133,6 @@ System.config({
       "buffer": "github:jspm/nodelibs-buffer@0.1.0",
       "iconv-lite": "npm:iconv-lite@0.4.13"
     },
-    "npm:envify@3.4.0": {
-      "jstransform": "npm:jstransform@10.1.0",
-      "process": "github:jspm/nodelibs-process@0.1.2",
-      "through": "npm:through@2.3.8"
-    },
-    "npm:esprima-fb@13001.1001.0-dev-harmony-fb": {
-      "fs": "github:jspm/nodelibs-fs@0.1.2",
-      "process": "github:jspm/nodelibs-process@0.1.2"
-    },
     "npm:fbjs@0.6.1": {
       "process": "github:jspm/nodelibs-process@0.1.2"
     },
@@ -185,22 +170,14 @@ System.config({
       "process": "github:jspm/nodelibs-process@0.1.2"
     },
     "npm:isomorphic-fetch@2.2.1": {
-      "node-fetch": "npm:node-fetch@1.5.0",
+      "node-fetch": "npm:node-fetch@1.5.1",
       "whatwg-fetch": "npm:whatwg-fetch@0.11.0"
-    },
-    "npm:jstransform@10.1.0": {
-      "base62": "npm:base62@0.1.1",
-      "buffer": "github:jspm/nodelibs-buffer@0.1.0",
-      "esprima-fb": "npm:esprima-fb@13001.1001.0-dev-harmony-fb",
-      "fs": "github:jspm/nodelibs-fs@0.1.2",
-      "process": "github:jspm/nodelibs-process@0.1.2",
-      "source-map": "npm:source-map@0.1.31"
     },
     "npm:jwt-decode@2.0.1": {
       "fs": "github:jspm/nodelibs-fs@0.1.2",
       "systemjs-json": "github:systemjs/plugin-json@0.1.0"
     },
-    "npm:lodash@4.8.2": {
+    "npm:lodash@4.10.0": {
       "buffer": "github:jspm/nodelibs-buffer@0.1.0",
       "process": "github:jspm/nodelibs-process@0.1.2"
     },
@@ -210,12 +187,12 @@ System.config({
       "stream": "github:jspm/nodelibs-stream@0.1.0",
       "util": "github:jspm/nodelibs-util@0.1.0"
     },
-    "npm:node-fetch@1.5.0": {
+    "npm:node-fetch@1.5.1": {
       "buffer": "github:jspm/nodelibs-buffer@0.1.0",
       "encoding": "npm:encoding@0.1.12",
       "http": "github:jspm/nodelibs-http@1.7.1",
       "https": "github:jspm/nodelibs-https@0.1.0",
-      "is-stream": "npm:is-stream@1.0.1",
+      "is-stream": "npm:is-stream@1.1.0",
       "stream": "github:jspm/nodelibs-stream@0.1.0",
       "url": "github:jspm/nodelibs-url@0.1.0",
       "util": "github:jspm/nodelibs-util@0.1.0",
@@ -250,16 +227,16 @@ System.config({
     "npm:react-lazy-cache@3.0.1": {
       "deep-equal": "npm:deep-equal@1.0.1"
     },
-    "npm:react-redux@4.4.1": {
+    "npm:react-redux@4.4.4": {
       "hoist-non-react-statics": "npm:hoist-non-react-statics@1.0.5",
       "invariant": "npm:invariant@2.2.1",
-      "lodash": "npm:lodash@4.8.2",
+      "lodash": "npm:lodash@4.10.0",
       "loose-envify": "npm:loose-envify@1.1.0",
       "process": "github:jspm/nodelibs-process@0.1.2",
-      "react": "npm:react@15.0.0-rc.2",
-      "redux": "npm:redux@3.3.1"
+      "react": "npm:react@15.0.1",
+      "redux": "npm:redux@3.4.0"
     },
-    "npm:react-router@2.0.1": {
+    "npm:react-router@2.1.1": {
       "history": "npm:history@2.0.1",
       "invariant": "npm:invariant@2.2.1",
       "process": "github:jspm/nodelibs-process@0.1.2",
@@ -269,9 +246,10 @@ System.config({
       "fbjs": "npm:fbjs@0.6.1",
       "process": "github:jspm/nodelibs-process@0.1.2"
     },
-    "npm:react@15.0.0-rc.2": {
-      "envify": "npm:envify@3.4.0",
+    "npm:react@15.0.1": {
       "fbjs": "npm:fbjs@0.8.0",
+      "loose-envify": "npm:loose-envify@1.1.0",
+      "object-assign": "npm:object-assign@4.0.1",
       "process": "github:jspm/nodelibs-process@0.1.2"
     },
     "npm:readable-stream@1.1.13": {
@@ -301,26 +279,20 @@ System.config({
       "is-promise": "npm:is-promise@2.1.0",
       "process": "github:jspm/nodelibs-process@0.1.2",
       "react-lazy-cache": "npm:react-lazy-cache@3.0.1",
-      "react-redux": "npm:react-redux@4.4.1",
-      "redux": "npm:redux@3.3.1"
+      "react-redux": "npm:react-redux@4.4.4",
+      "redux": "npm:redux@3.4.0"
     },
     "npm:redux-saga@0.9.5": {
       "process": "github:jspm/nodelibs-process@0.1.2"
     },
-    "npm:redux@3.3.1": {
-      "lodash": "npm:lodash@4.8.2",
-      "lodash-es": "npm:lodash-es@4.8.2",
+    "npm:redux@3.4.0": {
+      "lodash": "npm:lodash@4.10.0",
+      "lodash-es": "npm:lodash-es@4.10.0",
       "loose-envify": "npm:loose-envify@1.1.0",
       "process": "github:jspm/nodelibs-process@0.1.2"
     },
-    "npm:rxjs@5.0.0-beta.5": {
+    "npm:rxjs@5.0.0-beta.6": {
       "buffer": "github:jspm/nodelibs-buffer@0.1.0",
-      "process": "github:jspm/nodelibs-process@0.1.2"
-    },
-    "npm:source-map@0.1.31": {
-      "amdefine": "npm:amdefine@1.0.0",
-      "fs": "github:jspm/nodelibs-fs@0.1.2",
-      "path": "github:jspm/nodelibs-path@0.1.0",
       "process": "github:jspm/nodelibs-process@0.1.2"
     },
     "npm:stream-browserify@1.0.0": {
@@ -330,10 +302,6 @@ System.config({
     },
     "npm:string_decoder@0.10.31": {
       "buffer": "github:jspm/nodelibs-buffer@0.1.0"
-    },
-    "npm:through@2.3.8": {
-      "process": "github:jspm/nodelibs-process@0.1.2",
-      "stream": "github:jspm/nodelibs-stream@0.1.0"
     },
     "npm:ua-parser-js@0.7.10": {
       "systemjs-json": "github:systemjs/plugin-json@0.1.0"

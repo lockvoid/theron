@@ -1,7 +1,7 @@
 {
   "name": "Theron",
   "description": "Reactive storage for modern apps",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "homepage": "https://theronapp.com",
   "repository": {
     "type": "git",
@@ -32,7 +32,7 @@
     "qs": "^6.1.0",
     "react": "^0.14.7",
     "react-dom": "^0.14.7",
-    "rxjs": "^5.0.0-beta.5",
+    "rxjs": "^5.0.0-beta.6",
     "serve-static": "^1.10.2",
     "ws": "^1.0.1"
   },
@@ -78,7 +78,7 @@
       "redux": "npm:redux@^3.3.1",
       "redux-form": "npm:redux-form@^4.2.2",
       "redux-saga": "npm:redux-saga@^0.9.5",
-      "rxjs": "npm:rxjs@^5.0.0-beta.5",
+      "rxjs": "npm:rxjs@^5.0.0-beta.6",
       "whatwg-fetch": "npm:whatwg-fetch@^0.11.0"
     },
     "devDependencies": {}
