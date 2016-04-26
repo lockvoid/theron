@@ -1,10 +1,11 @@
 'use strict';
 
-import * as express from 'express';
-import * as pg from 'pg';
 import * as bodyParser from 'body-parser';
 import * as cookieParser from 'cookie-parser';
+import * as express from 'express';
 import * as jwt from 'jsonwebtoken';
+import * as pg from 'pg';
+import * as request from 'request';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/server';
 
@@ -100,6 +101,12 @@ app.use(<express.ErrorRequestHandler>((err, req, res, next) => {
 
   next(err);
 }));
+
+// Proxy docs
+
+app.get('/docs*', (req, res) => {
+  request(`${process.env['DOCS_URL']}${req.path}`).on('error', (err) => res.send('Server error')).pipe(res);
+});
 
 // Render pages
 

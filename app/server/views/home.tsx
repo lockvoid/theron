@@ -33,7 +33,6 @@ export default ({ isAuth }) => (
         </wrapper>
       </header>
 
-
       <section className="features">
         <div className="feature">
           <h4>
