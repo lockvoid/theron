@@ -66,7 +66,7 @@ export default ({ isAuth }) => (
         </div>
       </section>
 
-      <section className="video">
+      <section className="video" id="screencasts">
         <h3>Watch how to build apps with Theron.</h3>
 
         <figure className="video">
