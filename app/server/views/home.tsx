@@ -13,6 +13,10 @@ export default ({ isAuth }) => (
 
             <ul>
               <li>
+                <a href="/blog">Blog</a>
+              </li>
+
+              <li>
                 <a href="/docs">Docs</a>
               </li>
 

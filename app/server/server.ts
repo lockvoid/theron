@@ -104,11 +104,7 @@ app.use(<express.ErrorRequestHandler>((err, req, res, next) => {
 
 // Proxy static pages
 
-app.get('/docs*', (req, res) => {
-  request(`${process.env['STATIC_URL']}${req.path}`).on('error', (err) => res.send('Server error')).pipe(res);
-});
-
-app.get('/blog*', (req, res) => {
+app.get('/:path(static|docs|blog)+*', (req, res) => {
   request(`${process.env['STATIC_URL']}${req.path}`).on('error', (err) => res.send('Server error')).pipe(res);
 });
 
