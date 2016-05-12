@@ -208,13 +208,16 @@ input[type="button"], button, a.button {
   &.flat {
     background-color: transparent;
     transition: background-color .1s;
+    border: 2px solid color(white b(20));
+    color: color(white b(80));
 
     &:hover {
-      background-color: color(white b(15%));
+      background-color: color(white b(20));
     }
 
     &:active, &:active:hover {
-      background-color: color(white b(20%));
+      background-color: color(white b(25));
+      border-color: color(white b(25));
       transition: none;
     }
 
@@ -248,7 +251,7 @@ form.default {
     }
   }
 
-  label.field {
+  label.field, div.field {
     display: block;
 
     & + label.field {
@@ -256,45 +259,32 @@ form.default {
     }
 
     input[type="text"], input[type="email"], input[type="password"] {
-      background-color: transparent;
-      background-image: linear-gradient($color-primary, $color-primary), linear-gradient(color(white b(20%)), color(white b(20%)));
-      background-position: center bottom, center calc(100% - 1px);
-      background-repeat: no-repeat;
-      background-size: 0 2px, 100% 1px;
-      height: 36px;
-      padding: 0 0 2px;
-      transition: background 0s ease-out;
-      width: 100%;
-
-      &:focus {
-        background-size: 100% 2px, 100% 1px;
-        transition-duration: .2s;
-      }
-
-      &:-webkit-autofill  {
-        box-shadow: 0 -1px 0 0 color(white b(20%)) inset;
-      }
+      @mixin size 100%, 40px;
+      background-color: white;
+      border-radius: 2px;
+      border: 1px solid color(white b(20));
+      padding: 0 10px;
     }
 
     div.title {
       color: color(white b(90%));
       display: flex;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 500;
       height: 16px;
       text-transform: uppercase;
+      margin-bottom: 10px;
 
       span.async {
         color: $color-observe;
         margin-left: auto;
-        animation: fader 2s infinite linear both;
       }
     }
 
     div.error, div.hint {
-      font-size: 12px;
+      font-size: 13px;
       line-height: 18px;
-      margin-top: 4px;
+      margin-top: 8px;
       min-height: 18px;
     }
 
@@ -303,7 +293,7 @@ form.default {
     }
 
     div.hint {
-      color: color(white b(90%));
+      color: color(black w(40%));
     }
 
     &.focused {
@@ -318,7 +308,7 @@ form.default {
       }
 
       input[type="text"], input[type="email"], input[type="password"] {
-        background-image: linear-gradient($color-failure, $color-failure), linear-gradient(color(white b(20%)), color(white b(20%)));
+        border-color: $color-failure;
       }
     }
   }
@@ -331,25 +321,25 @@ form.default {
     position: relative;
 
     div.title {
-      margin: 0 0 0 8px;
       color: color(white b(90%));
+      font-size: 12px;
+      height: 17px;
+      margin: 0 0 0 8px;
     }
 
     i {
+      @mixin size 17px, 17px;
       border-radius: 1px;
       border: 2px solid color(white b(50%));
       color: transparent;
       display: block;
-      height: 17px;
       position: relative;
-      width: 17px;
 
       svg {
-        height: 17px;
+        @mixin size 17px, 17px;
         left: -2px;
         position: absolute;
         top: -2px;
-        width: 17px;
       }
     }
 
