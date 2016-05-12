@@ -4,7 +4,7 @@ import { Map } from 'immutable';
 
 import { BaseRow } from './base_row';
 import { OffsetCache } from './offset_cache';
-import { EXECUTE_QUERY, ROW_ADDED, ROW_CHANGED, ROW_MOVED, ROW_REMOVED, BEGIN_TRANSACTION, COMMIT_TRANSACTION, ROLLBACK_TRANSACTION } from '../../lib/constants';
+import { EXECUTE_QUERY, ROW_ADDED, ROW_CHANGED, ROW_MOVED, ROW_REMOVED, BEGIN_TRANSACTION, COMMIT_TRANSACTION, ROLLBACK_TRANSACTION } from '../../../../lib/constants';
 
 export class QueryDiff extends Subject<any> {
   protected _cache = Map<string, OffsetCache<any>>();

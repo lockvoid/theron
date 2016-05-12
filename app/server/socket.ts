@@ -1,7 +1,7 @@
 import * as ws from 'ws';
 import * as pg from 'pg';
 
-import { Router } from './router';
+import { Router } from './lib/core/router';
 import { verifyClient } from './utils/verify_client';
 
 export const app = async (httpServer) => {

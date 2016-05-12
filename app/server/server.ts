@@ -12,9 +12,9 @@ import * as ReactDOM from 'react-dom/server';
 export const app = express();
 
 import { ValidationError } from 'objection';
-import { UserRecord } from './models/user';
+import { UserRecord } from './models';
 import { BaseError } from '../../lib/errors/base_error';
-import { wrap } from './wrap_async';
+import { wrap } from './utils/wrap_async';
 import { api } from './routes/api';
 
 // Parse params

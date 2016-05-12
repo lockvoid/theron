@@ -1,8 +1,8 @@
-import { WebSocketSubject } from '../../lib/websocket';
+import { WebSocketSubject } from '../../../../lib/websocket';
 import { Map, List } from 'immutable';
 
-import { SUBSCRIBE_QUERY, UNSUBSCRIBE_QUERY, EXECUTE_QUERY, REQUEST_SUCCESS, REQUEST_FAILURE } from '../../lib/constants';
-import { Theron } from '../../lib/driver/driver';
+import { SUBSCRIBE_QUERY, UNSUBSCRIBE_QUERY, EXECUTE_QUERY, REQUEST_SUCCESS, REQUEST_FAILURE } from '../../../../lib/constants';
+import { Theron } from '../../../../lib/driver/driver';
 import { QueryParser } from './query_parser';
 import { QueryDiff } from './query_diff';
 

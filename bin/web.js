@@ -7,7 +7,7 @@ const throng = require('throng');
 function start(id) {
   // Import
 
-  require('../dist/server/app/server/database');
+  require('../dist/server/app/server/config/objection');
 
   const server = require('../dist/server/app/server/server');
   const socket = require('../dist/server/app/server/socket');
