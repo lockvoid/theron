@@ -72,7 +72,7 @@ export class ShowApp extends React.Component<any, any> {
     }
 
     return (
-      <div className="apps new">
+      <div className="apps show">
         <header className="default">
           <h1>{app.name}</h1>
         </header>
@@ -98,7 +98,7 @@ export class ShowApp extends React.Component<any, any> {
 
             <FieldBox {...development}>
               <Checkbox {...development}>Development?</Checkbox>
-              <div className="hint">Uncheck to validate a query signature using a secret key</div>
+              <div className="hint">Uncheck to validate a query signature using the secret key</div>
             </FieldBox>
 
             <div className="buttons">
