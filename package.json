@@ -35,6 +35,7 @@
     "request": "^2.72.0",
     "rxjs": "^5.0.0-beta.6",
     "serve-static": "^1.10.2",
+    "throng": "^4.0.0",
     "ws": "^1.0.1"
   },
   "devDependencies": {
