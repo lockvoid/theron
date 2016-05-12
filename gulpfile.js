@@ -38,7 +38,7 @@ gulp.task('publish.cdn.driver', publishDriverToCDN);
 
 gulp.task('publish.npm.driver', publishDriverToNPM);
 
-gulp.task('default', gulp.series(clean, buildTasks, startHttp, watchTasks));
+gulp.task('default', gulp.series(clean, buildTasks, startWeb, watchTasks));
 
 gulp.task('release', gulp.series(clean, buildTasks, gulp.parallel(bundleClient, 'build.npm.driver', 'build.cdn.driver', minifyCss, minifyJs), revPublic, repPublic));
 
@@ -50,23 +50,25 @@ function clean() {
   return del('dist');
 }
 
-// Listen
+// Start
 
-var httpProcess = null;
+var webProcess = null;
 
-function startHttp(done) {
-  if (!httpProcess) {
-    httpProcess = cprocess.spawn('node', ['--harmony_destructuring', '--harmony_default_parameters', '--harmony_rest_parameters', 'bin/web'], { stdio: 'inherit' });
+function startWeb(done) {
+  if (!webProcess) {
+    webProcess = cprocess.spawn('node', ['--harmony_destructuring', '--harmony_default_parameters', '--harmony_rest_parameters', 'bin/web'], { stdio: 'inherit' });
   }
 
   done();
 }
 
-function closeHttp(done) {
-  httpProcess && httpProcess.kill();
-  httpProcess = null;
+function killWeb(done) {
+  if (webProcess) {
+    webProcess.once('close', done);
+    webProcess.kill();
+  }
 
-  done();
+  webProcess = null;
 }
 
 // Server
@@ -81,7 +83,7 @@ function buildServer() {
 }
 
 function watchServer() {
-  gulp.watch('{app/server,lib,db}/**/*.{ts,tsx}', gulp.series(gulp.parallel(buildServer, closeHttp), startHttp));
+  gulp.watch('{app/server,lib,db}/**/*.{ts,tsx}', gulp.series(gulp.parallel(buildServer, killWeb), startWeb));
 }
 
 // Client
