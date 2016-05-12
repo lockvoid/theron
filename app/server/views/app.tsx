@@ -15,7 +15,7 @@ const Boot = () => {
       <script src="/config.js" />
 
       <script dangerouslySetInnerHTML={{ __html: `
-        System.import('babel-polyfill'); System.import('/app/client/main').catch(console.log.bind(console));
+        System.import('babel-polyfill'); System.import('/app/client/client').catch(console.log.bind(console));
       ` }} />,
     </div>
   );
