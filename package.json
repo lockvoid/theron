@@ -2,10 +2,10 @@
   "name": "Theron",
   "description": "Reactive storage for modern apps",
   "version": "0.1.4",
-  "homepage": "https://theronapp.com",
+  "homepage": "https://therondb.com",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rosendi/theron.git"
+    "url": "git+https://github.com/therondb/theron.git"
   },
   "scripts": {
     "postinstall": "bin/postinstall.sh",
