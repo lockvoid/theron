@@ -62,7 +62,7 @@ export class ResponseReducer implements NextObserver<any>, ErrorObserver<any> {
   protected _onSubscribe(req) {
     this._state = this._state.updateIn(this._socketPath(req), Map({ socket: req.socket, count: 0 }), socket => socket.update('count', count => count + 1));
 
-    req.socket.next(this._response(OK, req, { channel: req.channel }));
+    req.socket.next(this._toResponse(OK, req, { channel: req.channel }));
 
     if (process.env.NODE_ENV !== 'PRODUCTION') {
       console.log(`<---- Subscribe to '${req.channel}' with ${this._state.getIn(this._socketPath(req, 'count'))} clients`);
@@ -80,7 +80,7 @@ export class ResponseReducer implements NextObserver<any>, ErrorObserver<any> {
       this._state = this._state.updateIn(this._socketPath(req, 'count'), count => count - 1);
     }
 
-    req.socket.next(this._response(OK, req, { channel: req.channel }));
+    req.socket.next(this._toResponse(OK, req, { channel: req.channel }));
 
     if (process.env.NODE_ENV !== 'PRODUCTION') {
       console.log(`----> Unsubscribe from '${req.channel}' with ${this._state.getIn(this._socketPath(req, 'count'))} clients`);
@@ -90,7 +90,7 @@ export class ResponseReducer implements NextObserver<any>, ErrorObserver<any> {
   protected _onPublish(req) {
     this._pub.publish(this._externalChannel(req.channel), JSON.stringify({ type: PUBLISH, channel: req.channel, payload: req.payload }));
 
-    req.socket.next(this._response(OK, req));
+    req.socket.next(this._toResponse(OK, req));
 
     if (process.env.NODE_ENV !== 'PRODUCTION') {
       console.log(`----> Publish to '${req.channel}'`);
@@ -98,10 +98,10 @@ export class ResponseReducer implements NextObserver<any>, ErrorObserver<any> {
   }
 
   protected _onError(req) {
-    req.socket.next(this._response(ERROR, req, { code: req.code, reason: req.reason }));
+    req.socket.next(this._toResponse(ERROR, req, { code: req.code, reason: req.reason }));
   }
 
-  protected _response(type: string, { id }, res?) {
+  protected _toResponse(type: string, { id }, res?) {
     return Object.assign({}, res, { type, id });
   }
 

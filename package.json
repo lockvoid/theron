@@ -29,13 +29,12 @@
     "objection": "^0.4.0",
     "pg": "^4.5.2",
     "pg-promise": "^3.5.3",
-    "qs": "^6.1.0",
     "raygun": "^0.8.5",
     "react": "^0.14.7",
     "react-dom": "^0.14.7",
     "redis": "^2.5.3",
     "request": "^2.72.0",
-    "rxjs": "^5.0.0-beta.6",
+    "rxjs": "^5.0.0-beta.8",
     "serve-static": "^1.10.2",
     "throng": "^4.0.0",
     "ws": "^1.0.1",
@@ -71,10 +70,9 @@
   },
   "jspm": {
     "dependencies": {
-      "babel-polyfill": "npm:babel-polyfill@^6.7.4",
+      "babel-polyfill": "npm:babel-polyfill@6.7.4",
       "immutable": "npm:immutable@^3.7.6",
       "jwt-decode": "npm:jwt-decode@^2.0.1",
-      "qs": "npm:qs@^6.1.0",
       "react": "npm:react@^0.14.8",
       "react-dom": "npm:react-dom@^0.14.8",
       "react-redux": "npm:react-redux@^4.4.1",
@@ -83,7 +81,7 @@
       "redux": "npm:redux@^3.3.1",
       "redux-form": "npm:redux-form@^4.2.2",
       "redux-saga": "npm:redux-saga@^0.9.5",
-      "rxjs": "npm:rxjs@^5.0.0-beta.6"
+      "rxjs": "npm:rxjs@^5.0.0-beta.8"
     },
     "devDependencies": {}
   },

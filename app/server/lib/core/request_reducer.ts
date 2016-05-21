@@ -1,4 +1,5 @@
 import * as crypto from 'crypto';
+import * as codes from '../../../../lib/constants';
 
 import { Observable } from 'rxjs/Observable';
 import { AppRecord } from '../../models/app';
@@ -17,7 +18,7 @@ export class RequestReducer<T extends { type: string }, R> {
 
   next = (req: T): Observable<R> => {
     if (!this._app && req.type !== CONNECT) {
-      throw { code: 3403, reason: `App isn't connected` };
+      throw { code: codes.APP_DISCONNECTED, reason: `App isn't connected` };
     }
 
     switch (req.type) {
@@ -46,73 +47,73 @@ export class RequestReducer<T extends { type: string }, R> {
       this._app.objectId = this._sha256(this._app.id);
     } catch (err) {
       logError(err);
-      throw { code: 3500, reason: `An error has occurred` };
+      throw { code: codes.SERVER_ERROR, reason: `An error has occurred` };
     }
 
     if (!this._app) {
-      throw { code: 3404, reason: `App '${req.app}' doesn't exist` };
+      throw { code: codes.APP_DOES_NOT_EXIST, reason: `App '${req.app}' doesn't exist` };
     }
 
-    return this._request(CONNECT, req);
+    return this._toRequest(CONNECT, req);
   }
 
   protected async _onDisconnect(req): Promise<any> {
-    return this._request(DISCONNECT, req);
+    return this._toRequest(DISCONNECT, req);
   }
 
   protected async _onSubscribe(req): Promise<any> {
     if (!req.channel && !req.query) {
-      return this._request(ERROR, req, { code: 3400, reason: `Either channel nor query is given` });
+      return this._toRequest(ERROR, req, { code: codes.BAD_REQUEST, reason: `Either channel nor query is given` });
     }
 
     if (!this._app.development && Theron.sign(req.channel || req.query, this._app.secret) !== req.signature) {
-      return this._request(ERROR, req, { code: 3403, reason: `Invalid signature '${req.signature}' for '${req.channel || req.query}'` });
+      return this._toRequest(ERROR, req, { code: codes.UNAUTHORIZED_REQUEST, reason: `Invalid signature '${req.signature}' for '${req.channel || req.query}'` });
     }
 
     if (req.channel && !this._validateChannel(req.channel)) {
-      return this._request(ERROR, req, { code: 3400, reason: `Channel '${req.channel}' includes invalid characters` });
+      return this._toRequest(ERROR, req, { code: codes.MALFORMED_SYNTAX, reason: `Channel '${req.channel}' includes invalid characters` });
     }
 
     if (req.channel) {
-      return this._request(SUBSCRIBE, req, { channel: this._channel(req.channel) });
+      return this._toRequest(SUBSCRIBE, req, { channel: this._toChannel(req.channel) });
     } else {
-      return this._request(SUBSCRIBE, req, { channel: this._channel(this._sha256(req.query)) });
+      return this._toRequest(SUBSCRIBE, req, { channel: this._toChannel(this._sha256(req.query)) });
     }
   }
 
   protected async _onUnsubscribe(req): Promise<any> {
     if (!req.channel) {
-      return this._request(ERROR, req, { code: 3400, reason: `Channel is required` });
+      return this._toRequest(ERROR, req, { code: codes.BAD_REQUEST, reason: `Channel is required` });
     }
 
     if (!this._validateChannel(req.channel)) {
-      return this._request(ERROR, req, { code: 3400, reason: `Channel '${req.channel}' includes invalid characters` });
+      return this._toRequest(ERROR, req, { code: codes.MALFORMED_SYNTAX, reason: `Channel '${req.channel}' includes invalid characters` });
     }
 
-    return this._request(UNSUBSCRIBE, req, { channel: req.channel });
+    return this._toRequest(UNSUBSCRIBE, req, { channel: req.channel });
   }
 
   protected async _onPublish(req): Promise<any> {
-    if (this._isSystemChannel(req.channel)) {
-      return this._request(ERROR, req, { code: 3403, reason: `Channel '${req.channel}' can't start with a reserved prefix 'TN'` });
+    if (!this._validateChannel(req.channel)) {
+      return this._toRequest(ERROR, req, { code: codes.MALFORMED_SYNTAX, reason: `Channel '${req.channel}' includes invalid characters` });
     }
 
-    if (!this._validateChannel(req.channel)) {
-      return this._request(ERROR, req, { code: 3400, reason: `Channel '${req.channel}' includes invalid characters` });
+    if (this._isSystemChannel(req.channel)) {
+      return this._toRequest(ERROR, req, { code: codes.MALFORMED_SYNTAX, reason: `Channel '${req.channel}' can't start with a reserved prefix 'TN'` });
     }
 
     if (!this._app.development && this._app.secret !== req.secret) {
-      return this._request(ERROR, req, { code: 3403, reason: `Invalid secret key for '${this._app.name}'` });
+      return this._toRequest(ERROR, req, { code: codes.INVALID_SECRET_KEY, reason: `Invalid secret key for '${this._app.name}'` });
     }
 
-    return this._request(PUBLISH, req, { channel: this._channel(req.channel), payload: req.payload || {} });
+    return this._toRequest(PUBLISH, req, { channel: this._toChannel(req.channel), payload: req.payload || {} });
   }
 
-  protected _request(type: string, { id }, req?) {
+  protected _toRequest(type: string, { id }, req?) {
     return Object.assign({}, req, { type, id });
   }
 
-  protected _channel(...parts: string[]): string {
+  protected _toChannel(...parts: string[]): string {
     return [this._app.objectId].concat(parts.map(part => this._sanitizeChannel(part))).join(':');
   }
 

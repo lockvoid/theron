@@ -1,34 +1,52 @@
-import * as qs from 'qs';
-
-import { PartialObserver } from 'rxjs/Observer';
+import { NextObserver } from 'rxjs/Observer';
+import { Subject } from 'rxjs/Subject';
 import { Observable } from 'rxjs/Observable';
-import { RescueWebSocketSubject } from '../websocket';
+import { WebSocketSubject } from '../websocket';
 import { Cache } from './cache';
 import { uuid } from './uuid';
 import { hmac } from './sha256';
-import { CONNECT, DISCONNECT, OK, ERROR, SUBSCRIBE, UNSUBSCRIBE, PUBLISH, SUBSCRIBE_QUERY, UNSUBSCRIBE_QUERY, REQUEST_SUCCESS, REQUEST_FAILURE } from '../constants';
+import { CONNECT, DISCONNECT, OK, ERROR, SUBSCRIBE, UNSUBSCRIBE, PUBLISH } from '../constants';
 
 import 'rxjs/add/observable/of';
 import 'rxjs/add/observable/throw';
+import 'rxjs/add/observable/timer';
 import 'rxjs/add/observable/dom/ajax';
+import 'rxjs/add/operator/do';
+import 'rxjs/add/operator/filter';
 import 'rxjs/add/operator/first';
+import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/mergeMap';
+import 'rxjs/add/operator/onErrorResumeNext';
 import 'rxjs/add/operator/publishLast';
+import 'rxjs/add/operator/retryWhen';
+import 'rxjs/add/operator/share';
+import 'rxjs/add/operator/switchMap';
 
 export * from '../constants';
 
-export interface TheronOptions { app: string; secret?: string; connectObserver?: PartialObserver<any>, disconnectObserver?: PartialObserver<any> }
+export interface TheronOptions {
+  app: string;
+  secret?: string;
+  onConnect?: NextObserver<any>;
+  onDisconnect?: NextObserver<any>;
+}
 
-export interface TheronAuthOptions { headers?: any; params?: any; }
+export interface TheronAuthOptions {
+  headers?: any;
+  params?: any;
+}
 
-export interface TheronJoinOptions { sign?: string; subscribeObserver?: PartialObserver<any>, unsubscribeObserver?: PartialObserver<any> }
+export interface TheronSecureOptions {
+  sign?: string;
+}
 
-export type TheronRequest<T> = T & { type: string, id: string }
+export interface TheronRescueOptions {
+  retry?: boolean;
+}
 
-export type TheronResponse<T> = T & { type: string, id: string }
+export type TheronTransport<T> = T & { type: string, id: string }
 
-export class Theron extends RescueWebSocketSubject<any> {
-  protected _cache = new Cache();
+export class Theron extends WebSocketSubject<any> {
   protected _auth: TheronAuthOptions = {};
 
   static sign(data: string = '', secret: string = ''): string {
@@ -36,96 +54,103 @@ export class Theron extends RescueWebSocketSubject<any> {
   }
 
   constructor(url: string, protected _options: TheronOptions) {
-    super(url);
+    super({ url });
 
-    this._connect();
+    Object.assign(this._config, {
+      onOpen: {
+        next: (event) => { this._options.onConnect && this._options.onConnect.next(event) }
+      },
 
-    // this.subscribe(this._cache);
+      onClose: {
+        next: (event) => { this._options.onDisconnect && this._options.onDisconnect.next(event) }
+      },
+
+      aroundUnbuffer: {
+        next: this._connect
+      },
+    });
   }
 
   disconnect = () => {
     window.removeEventListener('beforeunload', this.disconnect);
 
-    if (this._isWebSocketHot()) {
-      const req = this.request(DISCONNECT);
-
-      if (this._options.disconnectObserver) {
-        req.subscribe(this._options.disconnectObserver);
-      }
-
-      this.complete();
-    }
-  }
-
-  protected _connect() {
-    const req = this.request(CONNECT, { app: this._options.app, secret: this._options.secret });
-
-    if (this._options.connectObserver) {
-      req.subscribe(this._options.connectObserver);
+    if (!this.isConnected()) {
+      return;
     }
 
-    window.addEventListener('beforeunload', this.disconnect);
+    this._toRequest(DISCONNECT).subscribe(req => {
+      this.next(req);
+    });
+
+    this.complete();
   }
 
   setAuth(auth: TheronAuthOptions = {}) {
     this._auth = auth;
   }
 
-  request<T>(type: string, data?: any): Observable<TheronResponse<T>> {
-    let res = Observable.create(observer => {
-      const req = this._request(type, data);
-
-      this.first(res => res.id === req.id).mergeMap(res =>
-        res.type === ERROR ? Observable.throw({ code: res.code, reason: res.reason }) : Observable.of(res)
-      ).subscribe(observer);
-
-      this.next(req);
-    });
-
-    res = res.publishLast(); res.connect();
-
-    return res;
+  isConnected(): boolean {
+    return this._socket && this._socket.readyState === WebSocket.OPEN;
   }
 
-  publish<T>(channel: string, payload?: any): Observable<TheronResponse<T>> {
-    return this.request(PUBLISH, { channel, payload });
+  request<T>(type: string, data?: any, options?: TheronRescueOptions): Observable<TheronTransport<T>> {
+    options = Object.assign({ retry: true }, options);
+
+    let req = this._toRequest(type, data).do(req => this.next(req)).mergeMap(req => this.first(res => res.id === req.id).mergeMap(res =>
+      res.type === ERROR ? Observable.throw({ code: res.code, reason: res.reason }) : Observable.of(res)
+    ));
+
+    if (options.retry === true) {
+      req = this._toRescueObservable(req);
+    }
+
+    return req.publishLast().refCount();
   }
 
-  join<T>(channel: string, options: TheronJoinOptions = {}): Observable<TheronResponse<T>> {
-    return new Observable(observer => {
+  publish<T>(channel: string, payload?: any, options?: TheronRescueOptions): Observable<TheronTransport<T>> {
+    return this.request(PUBLISH, { channel, payload, secret: this._options.secret }, options);
+  }
+
+  join<T>(channel: string, options?: TheronRescueOptions & TheronSecureOptions & { onSubscribe?: NextObserver<any>, onUnsubscribe?: NextObserver<any> }): Observable<TheronTransport<T>> {
+    options = Object.assign({ retry: true }, options);
+
+    let req = new Observable(observer => {
+      // Fetch a signature form the endpoint or return an empty signature.
+
       if (options.sign) {
-        var sign = Observable.ajax.post<any>(options.sign, this._params({ channel }), this._auth.headers).map<string>(({ response }) => response.signature);
+        var sign = this._fetchSignature(options.sign, { channel });
       } else {
         var sign = Observable.of('');
       }
 
-      let req = sign.mergeMap(signature => this.request<any>(SUBSCRIBE, { channel, signature }));
+      // Register the subscription on the server and receive an internal channel name.
 
-      if (options.subscribeObserver) {
-        req.subscribe(options.subscribeObserver);
-      }
+      const meta = sign.mergeMap(signature => this.request<any>(SUBSCRIBE, { channel, signature }, { retry: false })).publishLast().refCount();
 
-      req.mergeMap(res => this.filter(message => message.channel === res.channel)).subscribe(observer);
+      meta.onErrorResumeNext<{ channel: string }>().subscribe(res => {
+        options.onSubscribe && options.onSubscribe.next({ channel });
+      })
+
+      // Filter the channel messages from the main queue.
+
+      meta.mergeMap(res => this.filter(message => message.channel === res.channel)).subscribe(observer);
 
       return () => {
-        /*
-        let req = this.request(UNSUBSCRIBE, { channel: 'before disc' });
+        meta.onErrorResumeNext<{ channel: string }>().subscribe(res => {
+          options.onUnsubscribe && options.onUnsubscribe.next({ channel });
 
-        req.subscribe(
-          res => {
-            let req = this.request(UNSUBSCRIBE, { channel: res.channel });
-
-            if (options.unsubscribeObserver) {
-              req.subscribe(options.unsubscribeObserver);
-            }
-          },
-
-          err => {
-            // TODO: Switch to OnErrorResumeNext once RxJS beta.8 is landed.
+          if (this.isConnected()) {
+            this._toRequest(UNSUBSCRIBE, { channel: res.channel }).subscribe(req => this.next(req));
           }
-        ); */
+        });
       }
     });
+
+    if (options.retry === true) {
+      req = this._toRescueObservable(req);
+    }
+
+    return req.share();
   }
 
   watch<T>(endpoint: string, params?: any): Observable<T> {
@@ -192,11 +217,41 @@ export class Theron extends RescueWebSocketSubject<any> {
     //});
   }
 
-  protected _request<T>(type: string, req?: any): TheronRequest<T> {
-    return Object.assign({}, req, { type, id: uuid() });
+  protected _connect = () => {
+    this._toRequest(CONNECT, { app: this._options.app, secret: this._options.secret }).subscribe(req => {
+      this.next(req);
+    });
+
+    window.addEventListener('beforeunload', this.disconnect);
+ }
+
+  protected _canRetry(err) {
+    if (err.code >= 4000 && err.code < 4100) {
+      throw err;
+    }
   }
 
-  protected _params(data: any): any {
-    return Object.assign({}, this._auth.params, data);
+  protected _fetchSignature(url, params: any): Observable<string> {
+    return Observable.ajax.post<any>(url, this._toParams(params), this._toHeaders()).map<string>(({ response }) => response.signature);
+  }
+
+  protected _toRescueObservable<T>(observable: Observable<T>): Observable<T> {
+    let attemp = 0; // TODO: Get rid of the mutable state once the #1413 RxJS issue is closed.
+
+    return observable.retryWhen(errs =>
+      errs.do(this._canRetry).switchMap(() => Observable.timer(Math.pow(2, attemp + 1) * 500).do(() => attemp++))
+    ).do(() => attemp = 0);
+  }
+
+  protected _toRequest<T>(type: string, req?: any): Observable<TheronTransport<T>> {
+    return Observable.of(Object.assign({}, req, { type, id: uuid() }));
+  }
+
+  protected _toParams(params?: any): any {
+    return Object.assign({}, this._auth.params, params);
+  }
+
+  protected _toHeaders(headers?: any): any {
+    return Object.assign({}, this._auth.headers, headers, { 'Content-Type': 'application/json' });
   }
 }

@@ -12,7 +12,7 @@ export class PingWebSocket<T> extends WebSocketSubject<T> {
   protected _heartbeat: NodeJS.Timer;
 
   constructor(socket: WebSocket) {
-    super(socket);
+    super({ socket });
 
     this._heartbeat = setInterval(() => socket.ping(null, null, true), 50000);
   }
@@ -23,8 +23,8 @@ export class PingWebSocket<T> extends WebSocketSubject<T> {
     return this.concatMap(next).map(assignThis).catch(err => Observable.throw(assignThis(err)));
   }
 
-  protected _resetWebSocket() {
-    super._resetWebSocket();
+  protected _closeConnection() {
+    super._closeConnection();
 
     clearTimeout(this._heartbeat);
   }

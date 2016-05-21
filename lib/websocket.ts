@@ -1,165 +1,161 @@
 import { Observable } from 'rxjs/Observable';
-import { Observer } from 'rxjs/Observer';
+import { Observer, NextObserver } from 'rxjs/Observer';
 import { Operator } from 'rxjs/Operator';
 import { ReplaySubject } from 'rxjs/ReplaySubject';
-import { Subject } from 'rxjs/Subject';
+import { Subject, AnonymousSubject } from 'rxjs/Subject';
 import { Subscriber } from 'rxjs/Subscriber';
-import { Subscription, TeardownLogic } from 'rxjs/Subscription';
-
-import 'rxjs/add/operator/filter';
-import 'rxjs/add/operator/map';
+import { Subscription } from 'rxjs/Subscription';
 
 /* @ifdef NODE_BUILD */ import * as WebSocket from 'ws'; /* @endif */
 
-export class WebSocketSubject<T> extends Subject<T> {
+export interface WebSocketSubjectConfig {
+  url?: string;
+  socket?: WebSocket;
+  onOpen?: NextObserver<any>;
+  onClose?: NextObserver<any>;
+  aroundUnbuffer?: NextObserver<any>;
+}
+
+export class WebSocketSubscription extends Subscription {
+  constructor(public subject: Subject<any>, public subscriber: Observer<any>) {
+    super();
+  }
+
+  unsubscribe() {
+    super.unsubscribe();
+
+    const { subject: { observers } } = this;
+
+    if (!observers || observers.length === 0 || this.subject.isStopped || this.subject.isUnsubscribed) {
+      return;
+    }
+
+    const subscriberIndex = observers.indexOf(this.subscriber);
+
+    if (subscriberIndex !== -1) {
+      observers.splice(subscriberIndex, 1);
+    }
+
+    this.subject = null;
+  }
+}
+
+export class WebSocketSubject<T> extends AnonymousSubject<T> {
   static objectId = 0;
 
+  protected _output: Subject<T> = new Subject<T>();
   protected _socket: WebSocket;
-  protected _config: string | WebSocket;
 
-  private _objectId: number;
+  private _objectId = WebSocketSubject.objectId++;
   private _bindings: any;
 
-  constructor(config: string | WebSocket | Observable<T>, destination?: Observer<T>) {
-    if (config instanceof Observable) {
-      super(destination, config);
-    } else {
-      super(new ReplaySubject());
-
-      this._objectId = WebSocketSubject.objectId++;
-      this._config = config;
-
-      if (!this._isWebSocketOwner()) {
-        this._emitWebSocket();
-      }
-    }
+  constructor(protected _config: WebSocketSubjectConfig) {
+    super(new ReplaySubject());
+    !this._isConstructor() && this._openConnection();
   }
 
   get objectId(): number {
     return this._objectId;
   }
 
-  lift<R>(operator: Operator<T, R>) {
-    const socket = new WebSocketSubject<T>(this, this.destination);
-    socket.operator = <any>operator;
-
-    return socket;
+  unsubscribe() {
+    super.unsubscribe();
+    this._closeConnection();
   }
 
-  protected _subscribe(subscriber: Subscriber<T>): TeardownLogic {
-    if (!this.observers) {
-      this.observers = [];
-    }
-
-    const subscription = <Subscription>super._subscribe(subscriber);
-
-    if (this.source || !subscription || subscription.isUnsubscribed) {
-      return subscription;
-    }
+  protected _subscribe(subscriber: Subscriber<T>): Subscription {
+    const subscription = new WebSocketSubscription(this, subscriber);
 
     if (!this._socket) {
-      this._emitWebSocket(subscription);
+      this._openConnection(subscription);
     }
 
+    subscription.add(this._output.subscribe(subscriber));
+
+    subscription.add(() => {
+      if (!this.observers || this.observers.length === 1) {
+        this._closeConnection();
+      }
+    });
+
+    this.observers.push(subscriber);
+
     if (this.observers.length === 1) {
-      this._bindings['message'] = (/* @ifndef NODE_BUILD */{/*@endif */ data /* @ifndef NODE_BUILD */}/*@endif */)=> {
-        this._onMessage(data);
-      }
-
-      this._bindings['error'] = err => {
-        this._onError(err);
-      }
-
-      this._bindings['close'] = (/* @ifndef NODE_BUILD */{/*@endif */ code, reason /* @ifndef NODE_BUILD */}/*@endif */) => {
-        this._onClose(code, reason);
-      }
-
       ['message', 'error', 'close'].forEach(method => {
         this._socket.add/* @ifndef NODE_BUILD */Event/* @endif */Listener(method, this._bindings[method]);
       });
     }
 
-    return new Subscription(() => {
-      subscription.unsubscribe();
-
-      if (!this.observers || this.observers.length === 0) {
-        this._resetWebSocket();
-      }
-    });
+    return subscription;
   }
 
-  protected _unsubscribe() {
-    super._unsubscribe();
-
-    if (this._isWebSocketOwner()) {
-      this.isStopped = false;
-      this.isUnsubscribed = false;
-      this.hasErrored = false;
-      this.hasCompleted = false;
+  protected _openConnection(subscription?: Subscription) {
+    if (this._isConstructor()) {
+      this._socket = new WebSocket(this._config.url);
+    } else {
+      this._socket = this._config.socket;
     }
 
-    this._resetWebSocket();
-  }
-
-  protected _emitWebSocket(subscription?: Subscription) {
-    this._socket = this._constructWebSocket(this._config);
-
-    this._bindings = Object.assign(this._bindings || {}, {
-      open: () => {
+    this._bindings = {
+      open: (event) => {
         this._onOpen(subscription)
-      }
-    });
+      },
+
+      message: (/* @ifndef NODE_BUILD */{/*@endif */ data /* @ifndef NODE_BUILD */}/*@endif */) => {
+        this._onMessage(data);
+      },
+
+      error: (err) => {
+        this._onError(err);
+      },
+
+      close: (/* @ifndef NODE_BUILD */{/*@endif */ code, reason /* @ifndef NODE_BUILD */}/*@endif */) => {
+        this._onClose(code, reason);
+      },
+    };
+
+    if (!this._isConstructor() && !subscription) {
+      ['error', 'close'].forEach(method => {
+        this._socket.add/* @ifndef NODE_BUILD */Event/* @endif */Listener(method, this._bindings[method]); /* NODE */
+      });
+    }
 
     switch (this._socket.readyState) {
       case WebSocket.CONNECTING:
-        this._socket.add/* @ifndef NODE_BUILD */Event/* @endif */Listener('open', this._bindings['open']);
+        this._socket.add/* @ifndef NODE_BUILD */Event/* @endif */Listener('open', this._bindings['open']); /*NODE*/
         break;
       case WebSocket.OPEN:
-        this._unbufferMessages(subscription);
+        this._onOpen();
         break;
       case WebSocket.CLOSED:
-        return this._finalComplete();
+        this._output.complete();
+        break;
     }
   }
 
-  protected _constructWebSocket(url: string | WebSocket): WebSocket {
-    if (typeof url === 'string') {
-      return new WebSocket(url);
-    } else {
-      return url;
-    }
-  }
-
-  protected _resetWebSocket() {
+  protected _closeConnection() {
     if (!this._socket) {
       return
     }
 
-    ['message', 'error', 'close'].forEach(method => {
-      this._socket.remove/* @ifndef NODE_BUILD */Event/* @endif */Listener(method, this._bindings[method]);
-    });
-
-    if (this._isWebSocketOwner()) {
-      this._socket.remove/* @ifndef NODE_BUILD */Event/* @endif */Listener('open', this._bindings['open']);
+    if (this._isConstructor()) {
       this._socket.readyState < 2 && this._socket.close();
       this._socket = null;
 
       this.destination = new ReplaySubject();
+    } else {
+      this._socket.remove/* @ifndef NODE_BUILD */Event/* @endif */Listener('message', this._bindings.message);
     }
   }
 
-  protected _isWebSocketOwner(): boolean {
-    return typeof this._config === 'string';
+  protected _isConstructor(): boolean {
+    return typeof this._config.url === 'string';
   }
 
-  protected _isWebSocketHot(): boolean {
-    return !!this._socket;
-  }
-
-  protected _unbufferMessages(subscription?: Subscription) {
+  protected _unbufferOutput(subscription?: Subscription) {
     const queue = this.destination;
 
-    this.destination = Subscriber.create(
+    this.destination = new Subscriber(
       message => {
         this._socket.readyState === WebSocket.OPEN && this._socket.send(JSON.stringify(message));
       },
@@ -168,29 +164,33 @@ export class WebSocketSubject<T> extends Subject<T> {
         if (err && err.code) {
           this._socket.close(err.code, err.reason);
         } else {
-          this._finalError(new TypeError('WebSocket.error must be called with an object with an error code and an optional reason'));
+          this._output.error(new TypeError('WebSocket.error must be called with an object with an error code and an optional reason'));
         }
       },
 
       () => {
-        this._socket.close();
+        this._socket.close(1000);
       }
     );
+
+    this._config.aroundUnbuffer && this._config.aroundUnbuffer.next(undefined);
 
     if (subscription && queue && queue instanceof ReplaySubject) {
       subscription.add(queue.subscribe(this.destination));
     }
   }
 
-  protected _onOpen(subscription: Subscription) {
-    this._unbufferMessages(subscription);
+  protected _onOpen(subscription?: Subscription) {
+    this._config.onOpen && this._config.onOpen.next(undefined);
+
+    this._unbufferOutput(subscription);
   }
 
   protected _onMessage(data) {
     try {
-      this._finalNext(JSON.parse(data));
-    } catch(error) {
-      this._finalError(error);
+      this._output.next(JSON.parse(data));
+    } catch(err) {
+      this._output.error(err);
     }
   }
 
@@ -199,13 +199,16 @@ export class WebSocketSubject<T> extends Subject<T> {
   }
 
   protected _onClose(code, reason) {
+    this._config.onClose && this._config.onClose.next({ code, reason });
+
     if (code === 1000) {
-      this._finalComplete();
+      this._output.complete();
     } else {
-      this._finalError(Object.assign({ code, reason }, { socket: this }));
+      this._output.error(Object.assign({ code, reason }, { socket: null/*this*/ }));
+    }
+
+    if (this._isConstructor()) {
+      this._output = new Subject();
     }
   }
-}
-
-export class RescueWebSocketSubject<T> extends WebSocketSubject<T> {
 }
