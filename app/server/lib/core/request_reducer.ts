@@ -12,7 +12,7 @@ import 'rxjs/add/observable/empty';
 import 'rxjs/add/observable/from';
 
 export class RequestReducer<T extends { type: string }, R> {
-  static SYSTEM_NAMESPACE = 'TN:';
+  static SYSTEM_NAMESPACE = 'TN';
 
   protected _app: any;
 
@@ -77,7 +77,7 @@ export class RequestReducer<T extends { type: string }, R> {
     if (req.channel) {
       return this._toRequest(SUBSCRIBE, req, { channel: this._toChannel(req.channel) });
     } else {
-      return this._toRequest(SUBSCRIBE, req, { channel: this._toChannel(this._sha256(req.query)) });
+      return this._toRequest(SUBSCRIBE, req, { channel: this._toChannel(true, this._sha256(req.query)) });
     }
   }
 
@@ -113,8 +113,14 @@ export class RequestReducer<T extends { type: string }, R> {
     return Object.assign({}, req, { type, id });
   }
 
-  protected _toChannel(...parts: string[]): string {
-    return [this._app.objectId].concat(parts.map(part => this._sanitizeChannel(part))).join(':');
+  protected _toChannel(system: boolean | string, ...parts: string[]): string {
+    if (system === true) {
+      var channel = [RequestReducer.SYSTEM_NAMESPACE, this._app.objectId].concat(parts);
+    } else {
+      var channel = [this._app.objectId].concat(RequestReducer.SYSTEM_NAMESPACE, parts);
+    }
+
+    return channel.map(part => this._sanitizeChannel(part)).join(':');
   }
 
   protected _sanitizeChannel(channel): string {
@@ -126,7 +132,7 @@ export class RequestReducer<T extends { type: string }, R> {
   }
 
   protected _isSystemChannel(channel): boolean {
-    return this._sanitizeChannel(channel).startsWith(RequestReducer.SYSTEM_NAMESPACE);
+    return this._sanitizeChannel(channel).startsWith(RequestReducer.SYSTEM_NAMESPACE + ':');
   }
 
   protected _sha256(data: string): string {
