@@ -38,7 +38,7 @@ gulp.task('publish.cdn.driver', publishDriverToCDN);
 
 gulp.task('publish.npm.driver', publishDriverToNPM);
 
-gulp.task('default', gulp.series(clean, buildTasks, startWeb, watchTasks));
+gulp.task('default', gulp.series(clean, buildTasks, gulp.parallel(startWeb, startWorker), watchTasks));
 
 gulp.task('release', gulp.series(clean, buildTasks, gulp.parallel(bundleClient, 'build.npm.driver', 'build.cdn.driver', minifyCss, minifyJs), revPublic, repPublic));
 
@@ -53,6 +53,7 @@ function clean() {
 // Start
 
 var webProcess = null;
+var workerProcess = null;
 
 function startWeb(done) {
   if (!webProcess) {
@@ -71,6 +72,23 @@ function killWeb(done) {
   webProcess = null;
 }
 
+function startWorker(done) {
+  if (!workerProcess) {
+    workerProcess = cprocess.spawn('node', ['--harmony_destructuring', '--harmony_default_parameters', '--harmony_rest_parameters', 'bin/worker'], { stdio: 'inherit' });
+  }
+
+  done();
+}
+
+function killWorker(done) {
+  if (workerProcess) {
+    workerProcess.once('close', done);
+    workerProcess.kill();
+  }
+
+  workerProcess = null;
+}
+
 // Server
 
 const serverProject = ts.createProject('app/server/tsconfig.json', { typescript: typescript });
@@ -83,7 +101,7 @@ function buildServer() {
 }
 
 function watchServer() {
-  gulp.watch('{app/server,lib,db}/**/*.{ts,tsx}', gulp.series(gulp.parallel(buildServer, killWeb), startWeb));
+  gulp.watch('{app/server,lib,db}/**/*.{ts,tsx}', gulp.series(gulp.parallel(buildServer, killWeb, killWorker), gulp.parallel(startWeb, startWorker)));
 }
 
 // Client
