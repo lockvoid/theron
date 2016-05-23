@@ -8,13 +8,21 @@ import 'rxjs/add/operator/catch';
 import 'rxjs/add/operator/concatMap';
 import 'rxjs/add/operator/map';
 
+const uuid = require('node-uuid');
+
 export class AliveWebSocket<T> extends WebSocketSubject<T> {
   protected _heartbeat: NodeJS.Timer;
 
   constructor(socket: WebSocket) {
     super({ socket });
 
+    socket['objectId'] = uuid.v1();
+
     this._heartbeat = setInterval(() => socket.ping(null, null, true), 50000);
+  }
+
+  get objectId(): number {
+    return this._socket['objectId'];
   }
 
   enqueue<R>(next: (req: T) => Observable<R>) {

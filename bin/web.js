@@ -23,8 +23,19 @@ function start(id) {
   httpServer.listen(PORT, () => {
     console.log(`Server ${id} is listening on: http://0.0.0.0:${PORT}`);
   });
+
+  // Teardown
+
+  process.on('SIGTERM', () => {
+    console.log(`Web ${id} is exiting...`);
+
+    socket.teardown();
+    server.teardown();
+
+    process.exit();
+  });
 }
 
-const WORKERS = process.env.NODE_ENV === 'production' ? process.env.WEB_CONCURRENCY : 1;
+const WORKERS = process.env.NODE_ENV === 'production' ? (process.env.WEB_CONCURRENCY || os.cpus().length) : 1;
 
 throng({ start, workers: WORKERS, lifetime: Infinity });

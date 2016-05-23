@@ -1,13 +1,16 @@
 import { Map } from 'immutable';
 import { NextObserver, ErrorObserver } from 'rxjs/Observer';
 import { PubSub } from './pub_sub';
+import { SocketResponder } from './socket_responder';
 import { DISCONNECT, OK, ERROR, SUBSCRIBE, UNSUBSCRIBE, PUBLISH, SYSTEM_PREFIX, WEBSOCKET_PREFIX } from '../../../../lib/constants';
 
-export class ChannelHive implements NextObserver<any>, ErrorObserver<any> {
+export class ChannelHive extends SocketResponder implements NextObserver<any>, ErrorObserver<any> {
   protected _state = Map<string, Map<string, Map<string, any>>>();
   protected _sub = PubSub.fork();
 
   constructor() {
+    super();
+
     this._sub.on('pmessage', this._broadcast);
     this._sub.psubscribe(this._pubChannel('*'));
   }
@@ -95,14 +98,6 @@ export class ChannelHive implements NextObserver<any>, ErrorObserver<any> {
 
   protected _onError(req) {
     this._respond(req, ERROR, { code: req.code, reason: req.reason });
-  }
-
-  protected _respond(req, type: string, res?) {
-    req.socket.next(this._toResponse(type, req, res));
-  }
-
-  protected _toResponse(type: string, { id }, res?) {
-    return Object.assign({}, res, { type, id });
   }
 
   protected _socketPath(req, ...path): string[] {

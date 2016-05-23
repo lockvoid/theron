@@ -41,21 +41,14 @@ export class WebSocketSubscription extends Subscription {
 }
 
 export class WebSocketSubject<T> extends AnonymousSubject<T> {
-  static objectId = 0;
-
   protected _output: Subject<T> = new Subject<T>();
   protected _socket: WebSocket;
 
-  private _objectId = WebSocketSubject.objectId++;
   private _bindings: any;
 
   constructor(protected _config: WebSocketSubjectConfig) {
     super(new ReplaySubject());
     !this._isConstructor() && this._openConnection();
-  }
-
-  get objectId(): number {
-    return this._objectId;
   }
 
   unsubscribe() {

@@ -41,6 +41,12 @@ export const app = async (httpServer) => {
     // Then broadcast across the connected clients.
 
     router.subscribe(hive);
-    router.filter(DatabaseWatcher.filter).subscribe(watcher);
- });
+    router.subscribe(watcher);
+  });
+
+  watcher.connectServer(socketServer);
+}
+
+export function teardown() {
+  watcher.teardown();
 }
