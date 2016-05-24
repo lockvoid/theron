@@ -50,14 +50,29 @@ export class WebSocketSubscriber<T> extends Subscriber<T> {
 }
 
 export class WebSocketSubject<T> extends AnonymousSubject<T> {
-  protected _output = new Subject<T>();
+  protected _config: WebSocketSubjectConfig
   protected _socket: WebSocket;
+  protected _output: Subject<T>;
 
-  constructor(protected _config: WebSocketSubjectConfig) {
-    super(new ReplaySubject());
+  constructor(config: WebSocketSubjectConfig, source?: Observable<T>) {
+    if (source instanceof Observable) {
+      super(undefined, source);
+    } else {
+      super(new ReplaySubject());
 
-    this._bind(this, '_onOpen', '_onMessage', '_onError', '_onClose');
-    this._isConstructor() || this._openConnection();
+      this._config = config;
+      this._output = new Subject<T>()
+
+      this._bind(this, '_onOpen', '_onMessage', '_onError', '_onClose');
+      this._isConstructor() || this._openConnection();
+    }
+  }
+
+  lift<T, R>(operator: Operator<T, R>): Observable<T> {
+    const socket = new WebSocketSubject(undefined, this);
+    socket.operator = operator;
+
+    return <any>socket;
   }
 
   unsubscribe() {
@@ -66,6 +81,10 @@ export class WebSocketSubject<T> extends AnonymousSubject<T> {
   }
 
   protected _subscribe(subscriber: Subscriber<T>): Subscription {
+    if (this.source) {
+      return super._subscribe(subscriber);
+    }
+
     const subscription = new WebSocketSubscription(this, subscriber);
 
     if (!this._socket) {
