@@ -112,7 +112,7 @@ export class RequestRouter<T extends { type: string }, R> extends SocketResponde
     if (system === true) {
       var channel = [SYSTEM_PREFIX, this._app.objectId].concat(parts);
     } else {
-      var channel = [this._app.objectId].concat(SYSTEM_PREFIX, parts);
+      var channel = [this._app.objectId].concat(system, parts);
     }
 
     return channel.map(part => this._sanitizeChannel(part)).join(':');
