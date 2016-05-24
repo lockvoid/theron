@@ -1,11 +1,13 @@
-import { Map } from 'immutable';
+import * as codes from '../../../../lib/constants';
+
+import { Map, Set } from 'immutable';
 import { NextObserver, ErrorObserver } from 'rxjs/Observer';
 import { PubSub } from './pub_sub';
 import { SocketResponder } from './socket_responder';
 import { DISCONNECT, OK, ERROR, SUBSCRIBE, UNSUBSCRIBE, PUBLISH, SYSTEM_PREFIX, WEBSOCKET_PREFIX } from '../../../../lib/constants';
 
 export class ChannelHive extends SocketResponder implements NextObserver<any>, ErrorObserver<any> {
-  protected _state = Map<string, Map<string, Map<string, any>>>();
+  protected _state = Map<string, Map<string, Map<string, any>>>();  /* { [channel: string]: { [socket: string]: { socket: WebSocket, tokens: Set<string> } } } */
   protected _sub = PubSub.fork();
 
   constructor() {
@@ -59,30 +61,28 @@ export class ChannelHive extends SocketResponder implements NextObserver<any>, E
   }
 
   protected _onSubscribe(req) {
-    this._state = this._state.updateIn(this._socketPath(req), Map({ socket: req.socket, count: 0 }), socket => socket.update('count', count => count + 1));
+    this._state = this._state.updateIn(this._channelPath(req), Map({ socket: req.socket, tokens: Set() }), socket =>
+      socket.update('tokens', tokens => tokens.add(req.token))
+    );
 
-    this._respond(req, OK, { channel: req.channel });
+    this._respond(req, OK, { channel: req.channel, token: req.token });
 
     if (process.env.NODE_ENV !== 'PRODUCTION') {
-      console.log(`<---- Subscribe to '${req.channel}' with ${this._state.getIn(this._socketPath(req, 'count'))} clients`);
+      const observersCount = this._state.getIn(this._channelPath(req, 'tokens'), Set()).count();
+      console.log(`----> Socket '${req.socket.objectId}' subscribed to '${req.channel}' with ${observersCount} observers`);
     }
   }
 
   protected _onUnsubscribe(req) {
-    if (this._channelWeight(req) <= 1) {
-      this._state = this._state.deleteIn(this._socketPath(req));
-
-      if (this._state.has(req.channel) && this._state.get(req.channel).isEmpty()) {
-        this._state = this._state.delete(req.channel);
-      }
-    } else {
-      this._state = this._state.updateIn(this._socketPath(req, 'count'), count => count - 1);
-    }
+    this._state = this._state.updateIn(this._channelPath(req), Map({ socket: req.socket, tokens: Set() }), socket =>
+      socket.update('tokens', tokens => tokens.delete(req.token))
+    );
 
     this._respond(req, OK, { channel: req.channel });
 
     if (process.env.NODE_ENV !== 'PRODUCTION') {
-      console.log(`----> Unsubscribe from '${req.channel}' with ${this._state.getIn(this._socketPath(req, 'count'))} clients`);
+      const observersCount = this._state.getIn(this._channelPath(req, 'tokens'), Set()).count();
+      console.log(`----> Socket '${req.socket.objectId}' unsubscribed from '${req.channel}' with ${observersCount} observers`);
     }
   }
 
@@ -100,12 +100,8 @@ export class ChannelHive extends SocketResponder implements NextObserver<any>, E
     this._respond(req, ERROR, { code: req.code, reason: req.reason });
   }
 
-  protected _socketPath(req, ...path): string[] {
-    return [req.channel, req.socket.objectId].concat(path);
-  }
-
-  protected _channelWeight(req) {
-    return this._state.getIn(this._socketPath(req, 'count'), 0);
+  protected _channelPath(root: { channel: string, socket: { objectId: string } }, ...path): string[] {
+    return [root.channel, root.socket.objectId].concat(path);
   }
 
   protected _pubChannel(subChannel: string) {

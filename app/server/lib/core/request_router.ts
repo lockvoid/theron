@@ -12,6 +12,8 @@ import { logError } from '../../utils/log_error';
 import 'rxjs/add/observable/empty';
 import 'rxjs/add/observable/from';
 
+const uuid = require('node-uuid');
+
 export class RequestRouter<T extends { type: string }, R> extends SocketResponder {
   protected _app: any;
 
@@ -74,9 +76,9 @@ export class RequestRouter<T extends { type: string }, R> extends SocketResponde
     }
 
     if (req.channel) {
-      return this._toReqRes(SUBSCRIBE, req, { channel: this._toChannel(req.channel) });
+      return this._toReqRes(SUBSCRIBE, req, { token: uuid.v1(), channel: this._toChannel(req.channel) });
     } else {
-      return this._toReqRes(SUBSCRIBE, req, { channel: this._toChannel(true, this._sha256(req.query)) });
+      return this._toReqRes(SUBSCRIBE, req, { token: uuid.v1(), channel: this._toChannel(true, this._sha256(req.query)) });
     }
   }
 
@@ -89,7 +91,7 @@ export class RequestRouter<T extends { type: string }, R> extends SocketResponde
       return this._toReqRes(ERROR, req, { code: codes.MALFORMED_SYNTAX, reason: `Channel '${req.channel}' includes invalid characters` });
     }
 
-    return this._toReqRes(UNSUBSCRIBE, req, { channel: req.channel });
+    return this._toReqRes(UNSUBSCRIBE, req, { token: req.token, channel: req.channel });
   }
 
   protected async _onPublish(req): Promise<any> {

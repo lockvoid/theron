@@ -136,11 +136,12 @@ export class Theron extends WebSocketSubject<any> {
       meta.mergeMap(res => this.filter(message => message.channel === res.channel)).subscribe(observer);
 
       return () => {
-        meta.onErrorResumeNext<{ channel: string }>().subscribe(res => {
-          options.onUnsubscribe && options.onUnsubscribe.next({ channel });
+        meta.onErrorResumeNext<{ channel: string, token: string }>().subscribe(res => {
+          options.onUnsubscribe && options.onUnsubscribe.next({ channel: res.channel });
+          console.log(res.token);
 
           if (this.isConnected()) {
-            this._toRequest(UNSUBSCRIBE, { channel: res.channel }).subscribe(req => this.next(req));
+            this._toRequest(UNSUBSCRIBE, { channel: res.channel, token: res.token }).subscribe(req => this.next(req));
           }
         });
       }
