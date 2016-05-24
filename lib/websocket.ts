@@ -40,6 +40,15 @@ export class WebSocketSubscription extends Subscription {
   }
 }
 
+export class WebSocketSubscriber<T> extends Subscriber<T> {
+  unsubscribe() {
+    super.unsubscribe();
+
+    this.isStopped = false;
+    this.isUnsubscribed = false;
+  }
+}
+
 export class WebSocketSubject<T> extends AnonymousSubject<T> {
   protected _output: Subject<T> = new Subject<T>();
   protected _socket: WebSocket;
@@ -91,7 +100,7 @@ export class WebSocketSubject<T> extends AnonymousSubject<T> {
 
     this._bindings = {
       open: (event) => {
-        this._onOpen(subscription)
+        this._onOpen()
       },
 
       message: (/* @ifndef NODE_BUILD */{/*@endif */ data /* @ifndef NODE_BUILD */}/*@endif */) => {
@@ -145,10 +154,10 @@ export class WebSocketSubject<T> extends AnonymousSubject<T> {
     return typeof this._config.url === 'string';
   }
 
-  protected _unbufferOutput(subscription?: Subscription) {
+  protected _unbufferOutput() {
     const queue = this.destination;
 
-    this.destination = new Subscriber(
+    this.destination = new WebSocketSubscriber(
       message => {
         this._socket.readyState === WebSocket.OPEN && this._socket.send(JSON.stringify(message));
       },
@@ -168,15 +177,19 @@ export class WebSocketSubject<T> extends AnonymousSubject<T> {
 
     this._config.aroundUnbuffer && this._config.aroundUnbuffer.next(undefined);
 
-    if (subscription && queue && queue instanceof ReplaySubject) {
-      subscription.add(queue.subscribe(this.destination));
+    if (queue && queue instanceof ReplaySubject) {
+      const subscription = queue.subscribe(this.destination);
+
+      setTimeout(() => {
+        subscription.unsubscribe();
+      });
     }
   }
 
-  protected _onOpen(subscription?: Subscription) {
+  protected _onOpen() {
     this._config.onOpen && this._config.onOpen.next(undefined);
 
-    this._unbufferOutput(subscription);
+    this._unbufferOutput();
   }
 
   protected _onMessage(data) {
