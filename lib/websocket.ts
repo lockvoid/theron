@@ -50,14 +50,14 @@ export class WebSocketSubscriber<T> extends Subscriber<T> {
 }
 
 export class WebSocketSubject<T> extends AnonymousSubject<T> {
-  protected _output: Subject<T> = new Subject<T>();
+  protected _output = new Subject<T>();
   protected _socket: WebSocket;
-
-  private _bindings: any;
 
   constructor(protected _config: WebSocketSubjectConfig) {
     super(new ReplaySubject());
-    !this._isConstructor() && this._openConnection();
+
+    this._bind(this, '_onOpen', '_onMessage', '_onError', '_onClose');
+    this._isConstructor() || this._openConnection();
   }
 
   unsubscribe() {
@@ -83,8 +83,8 @@ export class WebSocketSubject<T> extends AnonymousSubject<T> {
     this.observers.push(subscriber);
 
     if (this.observers.length === 1) {
-      ['message', 'error', 'close'].forEach(method => {
-        this._socket.add/* @ifndef NODE_BUILD */Event/* @endif */Listener(method, this._bindings[method]);
+      [['message', this._onMessage], ['error', this._onError], ['close', this._onClose]].forEach(tuple => {
+        this._socket.add/* @ifndef NODE_BUILD */Event/* @endif */Listener(<string>tuple[0], <any>tuple[1]);
       });
     }
 
@@ -98,33 +98,15 @@ export class WebSocketSubject<T> extends AnonymousSubject<T> {
       this._socket = this._config.socket;
     }
 
-    this._bindings = {
-      open: (event) => {
-        this._onOpen()
-      },
-
-      message: (/* @ifndef NODE_BUILD */{/*@endif */ data /* @ifndef NODE_BUILD */}/*@endif */) => {
-        this._onMessage(data);
-      },
-
-      error: (err) => {
-        this._onError(err);
-      },
-
-      close: (/* @ifndef NODE_BUILD */{/*@endif */ code, reason /* @ifndef NODE_BUILD */}/*@endif */) => {
-        this._onClose(code, reason);
-      },
-    };
-
     if (!this._isConstructor() && !subscription) {
-      ['error', 'close'].forEach(method => {
-        this._socket.add/* @ifndef NODE_BUILD */Event/* @endif */Listener(method, this._bindings[method]); /* NODE */
+      [['error', this._onError], ['close', this._onClose]].forEach(tuple => {
+        this._socket.add/* @ifndef NODE_BUILD */Event/* @endif */Listener(<string>tuple[0], <any>tuple[1]); /* NODE */
       });
     }
 
     switch (this._socket.readyState) {
       case WebSocket.CONNECTING:
-        this._socket.add/* @ifndef NODE_BUILD */Event/* @endif */Listener('open', this._bindings['open']); /*NODE*/
+        this._socket.add/* @ifndef NODE_BUILD */Event/* @endif */Listener('open', this._onOpen); /*NODE*/
         break;
       case WebSocket.OPEN:
         this._onOpen();
@@ -146,7 +128,7 @@ export class WebSocketSubject<T> extends AnonymousSubject<T> {
 
       this.destination = new ReplaySubject();
     } else {
-      this._socket.remove/* @ifndef NODE_BUILD */Event/* @endif */Listener('message', this._bindings.message);
+      this._socket.remove/* @ifndef NODE_BUILD */Event/* @endif */Listener('message', <any>this._onMessage);
     }
   }
 
@@ -192,7 +174,7 @@ export class WebSocketSubject<T> extends AnonymousSubject<T> {
     this._unbufferOutput();
   }
 
-  protected _onMessage(data) {
+  protected _onMessage(/* @ifndef NODE_BUILD */{/*@endif */ data /* @ifndef NODE_BUILD */}/*@endif */) {
     try {
       this._output.next(JSON.parse(data));
     } catch(err) {
@@ -204,7 +186,7 @@ export class WebSocketSubject<T> extends AnonymousSubject<T> {
     this.error(err);
   }
 
-  protected _onClose(code, reason) {
+  protected _onClose(/* @ifndef NODE_BUILD */{/*@endif */ code, reason /* @ifndef NODE_BUILD */}/*@endif */) {
     this._config.onClose && this._config.onClose.next({ code, reason });
 
     if (code === 1000) {
@@ -216,5 +198,11 @@ export class WebSocketSubject<T> extends AnonymousSubject<T> {
     if (this._isConstructor()) {
       this._output = new Subject();
     }
+  }
+
+  protected _bind(object, ...methods) {
+    methods.forEach(method => {
+      object[method] = object[method].bind(object);
+    })
   }
 }
