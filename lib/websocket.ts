@@ -176,8 +176,14 @@ export class WebSocketSubject<T> extends AnonymousSubject<T> {
 
   protected _onMessage(/* @ifndef NODE_BUILD */{/*@endif */ data /* @ifndef NODE_BUILD */}/*@endif */) {
     try {
-      this._output.next(JSON.parse(data));
-    } catch(err) {
+      var res = JSON.parse(data);
+    } catch (err) {
+      var err = err;
+    }
+
+    if (res) {
+      this._output.next(res);
+    } else {
       this._output.error(err);
     }
   }
