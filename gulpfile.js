@@ -56,10 +56,7 @@ var webProcess = null;
 var workerProcess = null;
 
 function startWeb(done) {
-  if (!webProcess) {
-    webProcess = cprocess.spawn('node', ['--harmony_destructuring', '--harmony_default_parameters', '--harmony_rest_parameters', 'bin/web'], { stdio: 'inherit' });
-  }
-
+  webProcess = cprocess.spawn('node', ['--harmony_destructuring', '--harmony_default_parameters', '--harmony_rest_parameters', 'bin/web'], { stdio: 'inherit' });
   done();
 }
 
@@ -73,10 +70,7 @@ function killWeb(done) {
 }
 
 function startWorker(done) {
-  if (!workerProcess) {
-    workerProcess = cprocess.spawn('node', ['--harmony_destructuring', '--harmony_default_parameters', '--harmony_rest_parameters', 'bin/worker'], { stdio: 'inherit' });
-  }
-
+  workerProcess = cprocess.spawn('node', ['--harmony_destructuring', '--harmony_default_parameters', '--harmony_rest_parameters', 'bin/worker'], { stdio: 'inherit' });
   done();
 }
 
@@ -101,7 +95,7 @@ function buildServer() {
 }
 
 function watchServer() {
-  gulp.watch('{app/server,lib,db}/**/*.{ts,tsx}', gulp.series(gulp.parallel(buildServer, killWeb, killWorker), gulp.parallel(startWeb, startWorker)));
+  gulp.watch('{app/server,lib,db}/**/*.{ts,tsx}', gulp.series(gulp.parallel(killWeb, killWorker), buildServer, gulp.parallel(startWeb, startWorker)));
 }
 
 // Client
