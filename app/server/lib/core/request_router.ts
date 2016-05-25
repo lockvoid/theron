@@ -4,16 +4,14 @@ import * as codes from '../../../../lib/constants';
 import { Observable } from 'rxjs/Observable';
 import { AppRecord } from '../../models/app';
 import { Theron } from '../../../../lib/driver/theron';
-import { CONNECT, DISCONNECT, OK, ERROR, SUBSCRIBE, UNSUBSCRIBE, PUBLISH } from '../../../../lib/constants';
+import { CONNECT, DISCONNECT, OK, ERROR, SUBSCRIBE, UNSUBSCRIBE, PUBLISH, SYSTEM_PREFIX } from '../../../../lib/constants';
 import { CHANNEL_REGEX } from '../../../../lib/regex';
 import { logError } from '../../utils/log_error';
 
 import 'rxjs/add/observable/empty';
 import 'rxjs/add/observable/from';
 
-export class RequestReducer<T extends { type: string }, R> {
-  static SYSTEM_NAMESPACE = 'TN';
-
+export class RequestRouter<T extends { type: string }, R> {
   protected _app: any;
 
   next = (req: T): Observable<R> => {
@@ -54,7 +52,7 @@ export class RequestReducer<T extends { type: string }, R> {
       throw { code: codes.APP_DOES_NOT_EXIST, reason: `App '${req.app}' doesn't exist` };
     }
 
-    return this._toRequest(CONNECT, req);
+    return this._toRequest(CONNECT, req, { app: this._app });
   }
 
   protected async _onDisconnect(req): Promise<any> {
@@ -115,9 +113,9 @@ export class RequestReducer<T extends { type: string }, R> {
 
   protected _toChannel(system: boolean | string, ...parts: string[]): string {
     if (system === true) {
-      var channel = [RequestReducer.SYSTEM_NAMESPACE, this._app.objectId].concat(parts);
+      var channel = [SYSTEM_PREFIX, this._app.objectId].concat(parts);
     } else {
-      var channel = [this._app.objectId].concat(RequestReducer.SYSTEM_NAMESPACE, parts);
+      var channel = [this._app.objectId].concat(SYSTEM_PREFIX, parts);
     }
 
     return channel.map(part => this._sanitizeChannel(part)).join(':');
@@ -132,7 +130,7 @@ export class RequestReducer<T extends { type: string }, R> {
   }
 
   protected _isSystemChannel(channel): boolean {
-    return this._sanitizeChannel(channel).startsWith(RequestReducer.SYSTEM_NAMESPACE + ':');
+    return this._sanitizeChannel(channel).startsWith(SYSTEM_PREFIX + ':');
   }
 
   protected _sha256(data: string): string {

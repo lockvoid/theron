@@ -1,21 +1,25 @@
 import * as WebSocket from 'ws';
 
-import { PingWebSocket } from './lib/core/ping_websocket';
-import { RequestReducer } from './lib/core/request_reducer';
-import { ResponseReducer } from './lib/core/response_reducer';
+import { DatabaseWatcher } from './lib/core/database_watcher';
+import { AliveWebSocket } from './lib/core/alive_websocket';
+import { RequestRouter } from './lib/core/request_router';
+import { ChannelHive } from './lib/core/channel_hive';
 
-const responses = new ResponseReducer();
+import 'rxjs/add/operator/share';
+
+const hive = new ChannelHive();
+const watcher = new DatabaseWatcher();
 
 export const app = async (httpServer) => {
   const socketServer = new WebSocket.Server({ server: httpServer });
 
   socketServer.on('connection', socket => {
-    const pingSocket = new PingWebSocket(socket);
+    const aliveSocket = new AliveWebSocket(socket);
 
     if (process.env.NODE_ENV !== 'PRODUCTION') {
-      console.log(`----> Session (${pingSocket.objectId}) is opened`);
+      console.log(`----> Session (${aliveSocket.objectId}) is opened`);
 
-      pingSocket.subscribe(
+      aliveSocket.subscribe(
         message => {
           console.log(`<---- Message: ${JSON.stringify(message)}`);
         },
@@ -25,17 +29,18 @@ export const app = async (httpServer) => {
         },
 
         () => {
-          console.log(`----> Session (${pingSocket.objectId}) is closed`);
+          console.log(`----> Session (${aliveSocket.objectId}) is closed`);
         }
       );
     }
 
     // Waiting for each new request to proceed before merging the next.
 
-    const requests = pingSocket.enqueue(new RequestReducer().next);
+    const router = aliveSocket.enqueue(new RequestRouter().next).share();
 
     // Then broadcast across the connected clients.
 
-    requests.subscribe(responses);
-  });
+    router.subscribe(hive);
+    router.filter(DatabaseWatcher.filter).subscribe(watcher);
+ });
 }

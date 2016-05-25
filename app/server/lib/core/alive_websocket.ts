@@ -8,7 +8,7 @@ import 'rxjs/add/operator/catch';
 import 'rxjs/add/operator/concatMap';
 import 'rxjs/add/operator/map';
 
-export class PingWebSocket<T> extends WebSocketSubject<T> {
+export class AliveWebSocket<T> extends WebSocketSubject<T> {
   protected _heartbeat: NodeJS.Timer;
 
   constructor(socket: WebSocket) {

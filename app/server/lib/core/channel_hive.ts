@@ -1,19 +1,15 @@
-import * as redis from 'redis';
-
 import { Map } from 'immutable';
 import { NextObserver, ErrorObserver } from 'rxjs/Observer';
-import { OK, ERROR, SUBSCRIBE, UNSUBSCRIBE, PUBLISH, DISCONNECT } from '../../../../lib/constants';
+import { PubSub } from './pub_sub';
+import { DISCONNECT, OK, ERROR, SUBSCRIBE, UNSUBSCRIBE, PUBLISH, SYSTEM_PREFIX, WEBSOCKET_PREFIX } from '../../../../lib/constants';
 
-export class ResponseReducer implements NextObserver<any>, ErrorObserver<any> {
-  static REDIS_NAMESPACE = 'TN:WS:';
-
+export class ChannelHive implements NextObserver<any>, ErrorObserver<any> {
   protected _state = Map<string, Map<string, Map<string, any>>>();
-  protected _pub = redis.createClient(process.env.REDIS_URL);
-  protected _sub = redis.createClient(process.env.REDIS_URL);
+  protected _sub = PubSub.fork();
 
   constructor() {
     this._sub.on('pmessage', this._broadcast);
-    this._sub.psubscribe(this._externalChannel('*'));
+    this._sub.psubscribe(this._pubChannel('*'));
   }
 
   next(req) {
@@ -44,7 +40,7 @@ export class ResponseReducer implements NextObserver<any>, ErrorObserver<any> {
   }
 
   protected _broadcast = (pattern: string, channel: string, message) => {
-    this._state.get(this._internalChannel(channel), Map<string, any>()).forEach(state => {
+    this._state.get(this._subChannel(channel), Map<string, any>()).forEach(state => {
       state.get('socket').next(JSON.parse(message));
     });
   }
@@ -62,7 +58,7 @@ export class ResponseReducer implements NextObserver<any>, ErrorObserver<any> {
   protected _onSubscribe(req) {
     this._state = this._state.updateIn(this._socketPath(req), Map({ socket: req.socket, count: 0 }), socket => socket.update('count', count => count + 1));
 
-    req.socket.next(this._toResponse(OK, req, { channel: req.channel }));
+    this._respond(req, OK, { channel: req.channel });
 
     if (process.env.NODE_ENV !== 'PRODUCTION') {
       console.log(`<---- Subscribe to '${req.channel}' with ${this._state.getIn(this._socketPath(req, 'count'))} clients`);
@@ -70,7 +66,7 @@ export class ResponseReducer implements NextObserver<any>, ErrorObserver<any> {
   }
 
   protected _onUnsubscribe(req) {
-    if (this._state.getIn(this._socketPath(req, 'count'), 1) === 1) {
+    if (this._channelWeight(req) <= 1) {
       this._state = this._state.deleteIn(this._socketPath(req));
 
       if (this._state.has(req.channel) && this._state.get(req.channel).isEmpty()) {
@@ -80,7 +76,7 @@ export class ResponseReducer implements NextObserver<any>, ErrorObserver<any> {
       this._state = this._state.updateIn(this._socketPath(req, 'count'), count => count - 1);
     }
 
-    req.socket.next(this._toResponse(OK, req, { channel: req.channel }));
+    this._respond(req, OK, { channel: req.channel });
 
     if (process.env.NODE_ENV !== 'PRODUCTION') {
       console.log(`----> Unsubscribe from '${req.channel}' with ${this._state.getIn(this._socketPath(req, 'count'))} clients`);
@@ -88,9 +84,9 @@ export class ResponseReducer implements NextObserver<any>, ErrorObserver<any> {
   }
 
   protected _onPublish(req) {
-    this._pub.publish(this._externalChannel(req.channel), JSON.stringify({ type: PUBLISH, channel: req.channel, payload: req.payload }));
+    PubSub.publish(this._pubChannel(req.channel), { type: PUBLISH, channel: req.channel, payload: req.payload });
 
-    req.socket.next(this._toResponse(OK, req));
+    this._respond(req, OK);
 
     if (process.env.NODE_ENV !== 'PRODUCTION') {
       console.log(`----> Publish to '${req.channel}'`);
@@ -98,7 +94,11 @@ export class ResponseReducer implements NextObserver<any>, ErrorObserver<any> {
   }
 
   protected _onError(req) {
-    req.socket.next(this._toResponse(ERROR, req, { code: req.code, reason: req.reason }));
+    this._respond(req, ERROR, { code: req.code, reason: req.reason });
+  }
+
+  protected _respond(req, type: string, res?) {
+    req.socket.next(this._toResponse(type, req, res));
   }
 
   protected _toResponse(type: string, { id }, res?) {
@@ -109,11 +109,15 @@ export class ResponseReducer implements NextObserver<any>, ErrorObserver<any> {
     return [req.channel, req.socket.objectId].concat(path);
   }
 
-  protected _externalChannel(internalChannel: string) {
-    return ResponseReducer.REDIS_NAMESPACE + internalChannel;
+  protected _channelWeight(req) {
+    return this._state.getIn(this._socketPath(req, 'count'), 0);
   }
 
-  protected _internalChannel(externalChannel: string) {
-    return externalChannel.replace(ResponseReducer.REDIS_NAMESPACE, '');
+  protected _pubChannel(subChannel: string) {
+    return [SYSTEM_PREFIX, WEBSOCKET_PREFIX, subChannel].join(':');
+  }
+
+  protected _subChannel(pubChannel: string) {
+    return pubChannel.split(':').slice(-2).join(':');
   }
 }

@@ -37,3 +37,9 @@ export const UNAUTHORIZED_REQUEST = 4007;
 export const BAD_REQUEST = 4008;
 export const OVER_CAPACITY = 4100;
 export const SERVER_ERROR = 4101;
+
+// System Constans
+
+export const SYSTEM_PREFIX = 'TN';
+export const DATABASE_PREFIX = 'DB';
+export const WEBSOCKET_PREFIX = 'WS';
