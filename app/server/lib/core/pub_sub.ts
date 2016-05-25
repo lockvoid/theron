@@ -33,25 +33,21 @@ export class PubSub {
     return channel.startsWith(PubSub.publishChannel(''));
   }
 
-  static countKeys(pattern: string): Promise<number> {
-    return new Promise<number>((resolve, reject) => {
-      const iterate = (acc = 0, cursor = 0) => {
-        PubSub.client.scan(cursor, 'MATCH', pattern, 'COUNT', '100', (err, res) => {
-          if (err) {
-            return reject(err);
-          }
+  static async countKeys(pattern: string): Promise<number> {
+    var count = 0; var cursor = 0;
 
-          const [cursor, keys] = res;
+    while (true) {
+      const [next, keys] = await new Promise<any>((resolve, reject) => {
+        PubSub.client.scan(cursor, 'MATCH', pattern, 'COUNT', '100', (err, res) => err ? reject(err) : resolve(res));
+      });
 
-          if (cursor == 0) {
-            return resolve(acc);
-          }
-
-          return iterate(acc + keys.length, cursor)
-        })
+      if ((cursor = next) == 0) { // NOTE: Don't use the strict comparison operator!
+        break;
       }
 
-      iterate();
-    });
+      count += keys.length;
+    }
+
+    return count;
   }
 }
