@@ -185,7 +185,7 @@ export class ChannelHive extends SocketResponder implements NextObserver<any>, E
   }
 
   protected _observerKey(req, channel: string, token: string) {
-    return PubSub.normalize(SYSTEM_PREFIX, WEBSOCKET_PREFIX, 'count', channel, req.socket.objectId, token);
+    return PubSub.normalize(SYSTEM_PREFIX, WEBSOCKET_PREFIX, 'observers', channel, req.socket.objectId, token);
   }
 
   protected _observerExpiresIn(): number {
