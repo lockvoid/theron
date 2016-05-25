@@ -45,7 +45,6 @@ export class RequestRouter<T extends { type: string }, R> extends SocketResponde
   protected async _onConnect(req): Promise<any> {
     try {
       this._app = await AppRecord.query().where('name', req.app).first();
-      this._app.objectId = this._sha256(this._app.id);
     } catch (err) {
       logError(err);
       throw { code: SERVER_ERROR, reason: `An error has occurred` };
@@ -67,12 +66,19 @@ export class RequestRouter<T extends { type: string }, R> extends SocketResponde
       return this._toReqRes(ERROR, req, { code: BAD_REQUEST, reason: `Either channel nor query is given` });
     }
 
-    if (!this._app.development && Theron.sign(req.channel || req.query, this._app.secret) !== req.signature) {
-      return this._toReqRes(ERROR, req, { code: UNAUTHORIZED_REQUEST, reason: `Invalid signature '${req.signature}' for '${req.channel || req.query}'` });
-    }
-
     if (req.channel && !this._validateChannel(req.channel)) {
       return this._toReqRes(ERROR, req, { code: MALFORMED_SYNTAX, reason: `Channel '${req.channel}' includes invalid characters` });
+    }
+
+    try {
+      const signed = await this._isSignedRequest(req.channel || req.query, req.signature);
+
+      if (!signed) {
+        return this._toReqRes(ERROR, req, { code: UNAUTHORIZED_REQUEST, reason: `Invalid signature '${req.signature}' for '${req.channel || req.query}'` });
+      }
+    } catch (err) {
+      logError(err);
+      return this._toReqRes(ERROR, req, { code: SERVER_ERROR, reason: `An error has occurred` });
     }
 
     if (req.channel) {
@@ -103,18 +109,29 @@ export class RequestRouter<T extends { type: string }, R> extends SocketResponde
       return this._toReqRes(ERROR, req, { code: MALFORMED_SYNTAX, reason: `Channel '${req.channel}' can't start with a reserved prefix 'TN'` });
     }
 
-    if (!this._app.development && this._app.secret !== req.secret) {
-      return this._toReqRes(ERROR, req, { code: INVALID_SECRET_KEY, reason: `Invalid secret key for '${this._app.name}'` });
+    try {
+      const secret = await this._isSecretRequest(req.secret);
+
+      if (!secret) {
+        return this._toReqRes(ERROR, req, { code: INVALID_SECRET_KEY, reason: `Invalid secret key for '${this._app.name}'` });
+      }
+    } catch (err) {
+      logError(err);
+      return this._toReqRes(ERROR, req, { code: SERVER_ERROR, reason: `An error has occurred` });
     }
 
     return this._toReqRes(PUBLISH, req, { channel: this._toChannel(req.channel), payload: req.payload || {} });
   }
 
+  protected _refetchApp(): Promise<any> {
+    return AppRecord.query().where('id', this._app.id).first();
+  }
+
   protected _toChannel(system: boolean | string, ...parts: string[]): string {
     if (system === true) {
-      var channel = [SYSTEM_PREFIX, this._app.objectId].concat(parts);
+      var channel = [SYSTEM_PREFIX, this._app.id].concat(parts);
     } else {
-      var channel = [this._app.objectId].concat(system, parts);
+      var channel = [this._app.id].concat(system, parts);
     }
 
     return channel.map(part => this._sanitizeChannel(part)).join(':');
@@ -126,6 +143,26 @@ export class RequestRouter<T extends { type: string }, R> extends SocketResponde
 
   protected _validateChannel(channel): boolean {
     return CHANNEL_REGEX.test(this._sanitizeChannel(channel));
+  }
+
+  protected async _isSignedRequest(data, signature): Promise<boolean> {
+    const app = await this._refetchApp();
+
+    if (app.development) {
+      return true;
+    } else {
+      return Theron.sign(data, app.secret) === signature;
+    }
+  }
+
+  protected async _isSecretRequest(secret): Promise<boolean> {
+    const app = await this._refetchApp();
+
+    if (app.development) {
+      return true;
+    } else {
+      return app.secret === secret;
+    }
   }
 
   protected _isSystemChannel(channel): boolean {
