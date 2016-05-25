@@ -1,11 +1,12 @@
-import { NextObserver } from 'rxjs/Observer';
 import { Subject } from 'rxjs/Subject';
+import { Subscription } from 'rxjs/Subscription';
 import { Observable } from 'rxjs/Observable';
+import { NextObserver } from 'rxjs/Observer';
 import { WebSocketSubject } from '../websocket';
 import { Cache } from './cache';
 import { uuid } from './uuid';
 import { hmac } from './sha256';
-import { CONNECT, DISCONNECT, OK, ERROR, SUBSCRIBE, UNSUBSCRIBE, PUBLISH } from '../constants';
+import { CONNECT, DISCONNECT, PING, PONG, OK, ERROR, SUBSCRIBE, UNSUBSCRIBE, PUBLISH } from '../constants';
 
 import 'rxjs/add/observable/of';
 import 'rxjs/add/observable/throw';
@@ -115,6 +116,8 @@ export class Theron extends WebSocketSubject<any> {
     options = Object.assign({ retry: true }, options);
 
     let req = new Observable(observer => {
+      const subscription = new Subscription();
+
       // Fetch a signature form the endpoint or return an empty signature.
 
       if (options.sign) {
@@ -125,26 +128,37 @@ export class Theron extends WebSocketSubject<any> {
 
       // Register the subscription on the server and receive an internal channel name.
 
-      const meta = sign.mergeMap(signature => this.request<any>(SUBSCRIBE, { channel, signature }, { retry: false })).publishLast().refCount();
+      const token: Observable<any> = sign.mergeMap(signature =>
+        this.request(SUBSCRIBE, { channel, signature }, { retry: false })
+      ).publishLast().refCount();
 
-      meta.onErrorResumeNext<{ channel: string }>().subscribe(res => {
+      // Hook subscribe / unsubscribe events.
+
+      subscription.add(token.onErrorResumeNext<any>().subscribe(({ channel }) => {
         options.onSubscribe && options.onSubscribe.next({ channel });
-      })
+      }));
+
+      subscription.add(() => {
+        token.onErrorResumeNext<any>().subscribe(({ channel, token }) => {
+          options.onUnsubscribe && options.onUnsubscribe.next({ channel });
+
+          if (this.isConnected()) {
+            this._toRequest(UNSUBSCRIBE, { channel, token }).subscribe(req => this.next(req));
+          }
+        });
+      });
+
+      // Pong the ping request.
+
+      subscription.add(token.mergeMap(({ token }) => this.filter(ping => ping.type === PING && ping.token === token)).onErrorResumeNext<any>().subscribe(
+        ({ token }) => this.next({ type: PONG, token })
+      ));
 
       // Filter the channel messages from the main queue.
 
-      meta.mergeMap(res => this.filter(message => message.channel === res.channel)).subscribe(observer);
+      subscription.add(token.mergeMap(({ channel }) => this.filter(message => message.channel === channel)).subscribe(observer));
 
-      return () => {
-        meta.onErrorResumeNext<{ channel: string, token: string }>().subscribe(res => {
-          options.onUnsubscribe && options.onUnsubscribe.next({ channel: res.channel });
-          console.log(res.token);
-
-          if (this.isConnected()) {
-            this._toRequest(UNSUBSCRIBE, { channel: res.channel, token: res.token }).subscribe(req => this.next(req));
-          }
-        });
-      }
+      return subscription;
     });
 
     if (options.retry === true) {

@@ -1,6 +1,5 @@
 import * as WebSocket from 'ws';
 
-import { DatabaseWatcher } from './lib/core/database_watcher';
 import { AliveWebSocket } from './lib/core/alive_websocket';
 import { RequestRouter } from './lib/core/request_router';
 import { ChannelHive } from './lib/core/channel_hive';
@@ -8,7 +7,6 @@ import { ChannelHive } from './lib/core/channel_hive';
 import 'rxjs/add/operator/share';
 
 const hive = new ChannelHive();
-const watcher = new DatabaseWatcher();
 
 export const app = async (httpServer) => {
   const socketServer = new WebSocket.Server({ server: httpServer });
@@ -41,12 +39,8 @@ export const app = async (httpServer) => {
     // Then broadcast across the connected clients.
 
     router.subscribe(hive);
-    router.subscribe(watcher);
   });
-
-  watcher.connectServer(socketServer);
 }
 
 export function teardown() {
-  watcher.teardown();
 }

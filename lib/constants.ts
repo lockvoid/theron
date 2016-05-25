@@ -2,6 +2,8 @@
 
 export const CONNECT = 'TN:CONNECT';
 export const DISCONNECT = 'TN:DISCONNECT';
+export const PING = 'TN:PING';
+export const PONG = 'TN:PONG';
 export const OK = 'TN:OK';
 export const ERROR = 'TN:ERROR';
 
@@ -17,6 +19,14 @@ export const ROW_CHANGED = 'TN:ROW_CHANGED';
 export const BEGIN_TRANSACTION = 'TN:BEGIN_TRANSACTION';
 export const COMMIT_TRANSACTION = 'TN:COMMIT_TRANSACTION';
 export const ROLLBACK_TRANSACTION = 'TN:ROLLBACK_TRANSACTION';
+
+// System Constans
+
+export const SYSTEM_PREFIX = 'TN';
+export const DATABASE_PREFIX = 'DB';
+export const WEBSOCKET_PREFIX = 'WS';
+export const PING_TIMEOUT = 20000;
+export const PONG_TIMEOUT = 5000;
 
 //  Error Codes
 //
@@ -38,8 +48,4 @@ export const BAD_REQUEST = 4008;
 export const OVER_CAPACITY = 4100;
 export const SERVER_ERROR = 4101;
 
-// System Constans
 
-export const SYSTEM_PREFIX = 'TN';
-export const DATABASE_PREFIX = 'DB';
-export const WEBSOCKET_PREFIX = 'WS';

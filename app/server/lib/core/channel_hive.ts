@@ -1,13 +1,25 @@
-import * as codes from '../../../../lib/constants';
-
 import { Map, Set } from 'immutable';
 import { NextObserver, ErrorObserver } from 'rxjs/Observer';
+import { Subject } from 'rxjs/Subject';
+import { Observable } from 'rxjs/Observable';
 import { PubSub } from './pub_sub';
 import { SocketResponder } from './socket_responder';
-import { DISCONNECT, OK, ERROR, SUBSCRIBE, UNSUBSCRIBE, PUBLISH, SYSTEM_PREFIX, WEBSOCKET_PREFIX } from '../../../../lib/constants';
+import { AliveWebSocket } from './alive_websocket';
+import { pdel } from './lua_scripts';
+import { logError } from '../../utils/log_error';
+import { DISCONNECT, PING, PONG, OK, ERROR, SUBSCRIBE, UNSUBSCRIBE, PUBLISH } from '../../../../lib/constants';
+import { SYSTEM_PREFIX, WEBSOCKET_PREFIX, DATABASE_PREFIX, PING_TIMEOUT, PONG_TIMEOUT } from '../../../../lib/constants';
+import { SERVER_ERROR } from '../../../../lib/constants';
+
+import 'rxjs/add/observable/interval';
+import 'rxjs/add/operator/first';
+import 'rxjs/add/operator/mergeMap';
+import 'rxjs/add/operator/takeUntil';
+import 'rxjs/add/operator/timeout';
 
 export class ChannelHive extends SocketResponder implements NextObserver<any>, ErrorObserver<any> {
-  protected _state = Map<string, Map<string, Map<string, any>>>();  /* { [channel: string]: { [socket: string]: { socket: WebSocket, tokens: Set<string> } } } */
+  protected _notifier = new Subject<any>();
+  protected _state = Map<string, Set<AliveWebSocket<any>>>();
   protected _sub = PubSub.fork();
 
   constructor() {
@@ -18,21 +30,28 @@ export class ChannelHive extends SocketResponder implements NextObserver<any>, E
   }
 
   next(req) {
+    this._notifier.next(req);
+
     switch (req.type) {
       case DISCONNECT:
-        return this._onDisconnect(req);
+        this._onDisconnect(req);
+        break;
 
       case SUBSCRIBE:
-        return this._onSubscribe(req);
+        this._onSubscribe(req);
+        break;
 
       case UNSUBSCRIBE:
-        return this._onUnsubscribe(req);
+        this._onUnsubscribe(req);
+        break;
 
       case PUBLISH:
-        return this._onPublish(req);
+        this._onPublish(req);
+        break;
 
       case ERROR:
-        return this._onError(req);
+        this._onError(req);
+        break;
     }
   }
 
@@ -44,46 +63,95 @@ export class ChannelHive extends SocketResponder implements NextObserver<any>, E
     this._onDisconnect(err);
   }
 
-  protected _broadcast = (pattern: string, channel: string, message) => {
-    this._state.get(this._subChannel(channel), Map<string, any>()).forEach(state => {
-      state.get('socket').next(JSON.parse(message));
+  protected _broadcast = (pattern: string, channel: string, message: string) => {
+    this._state.get(this._subChannel(channel), Set<AliveWebSocket<any>>()).forEach(socket => {
+      socket.next(JSON.parse(message));
     });
   }
 
   protected _onDisconnect(req) {
-    this._state = this._state.map(channel => channel.delete(req.socket.objectId)).filterNot(channel => channel.isEmpty()).toMap();
+    this._state = this._state.map(channel => channel.delete(req.socket)).filterNot(channel => channel.isEmpty()).toMap();
 
     try {
-      req.socket.complete();
+      PubSub.client.eval(pdel, 1, this._observerKey(req, '*', '*'));
     } catch (err) {
-      console.log(err);
+      logError(err);
     }
+
+    req.socket.complete();
   }
 
-  protected _onSubscribe(req) {
-    this._state = this._state.updateIn(this._channelPath(req), Map({ socket: req.socket, tokens: Set() }), socket =>
-      socket.update('tokens', tokens => tokens.add(req.token))
-    );
+  protected async _onSubscribe(req) {
+    PubSub.client.setex(this._observerKey(req, req.channel, req.token), this._observerExpiresIn(), true, async (err, res) => {
+      if (err) {
+        logError(err);
+        return this._respond(req, ERROR, { code: SERVER_ERROR, reason: `Subscription isn't created`});
+      }
 
-    this._respond(req, OK, { channel: req.channel, token: req.token });
+      this._state = this._state.update(req.channel, Set<AliveWebSocket<any>>(), sockets => sockets.add(req.socket));
 
-    if (process.env.NODE_ENV !== 'PRODUCTION') {
-      const observersCount = this._state.getIn(this._channelPath(req, 'tokens'), Set()).count();
-      console.log(`----> Socket '${req.socket.objectId}' subscribed to '${req.channel}' with ${observersCount} observers`);
-    }
+      // Ping the observer and renew the experation on pong.
+
+      const interval = Observable.interval(PING_TIMEOUT).takeUntil(
+        this._notifier.first(({ type, token, socket }) => (type === UNSUBSCRIBE && token == req.token) || (type === DISCONNECT && socket === req.socket))
+      );
+
+      interval.do(() => req.socket.next({ type: PING, token: req.token })).mergeMap(() =>
+        req.socket.first(({ type, token }) => type === PONG && token == req.token).timeout(PONG_TIMEOUT)
+      ).subscribe(
+         () => {
+           PubSub.client.expire(this._observerKey(req, req.channel, req.token), this._observerExpiresIn());
+
+           if (process.env.NODE_ENV !== 'PRODUCTION') {
+             console.log(`----> Subscription '${req.socket.objectId}' is alive`);
+           }
+         },
+
+         () => {
+           if (process.env.NODE_ENV !== 'PRODUCTION') {
+             console.log(`----> Subscription '${req.socket.objectId}' is dead`);
+           }
+         }
+      )
+
+      this._respond(req, OK, { channel: req.channel, token: req.token });
+
+      if (process.env.NODE_ENV !== 'PRODUCTION') {
+        try {
+          var observersCount = await PubSub.countKeys(this._observerKey(req, req.channel, '*'));
+        } catch (err) {
+          logError(err);
+        }
+
+        console.log(`----> Socket '${req.socket.objectId}' subscribed to '${req.channel}' with ${observersCount} observers`);
+      }
+    });
   }
 
-  protected _onUnsubscribe(req) {
-    this._state = this._state.updateIn(this._channelPath(req), Map({ socket: req.socket, tokens: Set() }), socket =>
-      socket.update('tokens', tokens => tokens.delete(req.token))
-    );
+  protected async _onUnsubscribe(req) {
+    PubSub.client.del(this._observerKey(req, req.channel, req.token), async (err, res) => {
+      if (err) {
+        logError(err);
+        return this._respond(req, ERROR, { code: SERVER_ERROR, reason: `Subscription isn't disposed`});
+      }
 
-    this._respond(req, OK, { channel: req.channel });
+      try {
+        var observersCount = await PubSub.countKeys(this._observerKey(req, req.channel, '*'));
+      } catch (err) {
+        logError(err);
+        return this._respond(req, ERROR, { code: SERVER_ERROR, reason: `Subscription isn't disposed`});
+      }
 
-    if (process.env.NODE_ENV !== 'PRODUCTION') {
-      const observersCount = this._state.getIn(this._channelPath(req, 'tokens'), Set()).count();
-      console.log(`----> Socket '${req.socket.objectId}' unsubscribed from '${req.channel}' with ${observersCount} observers`);
-    }
+      if (observersCount === 0) {
+        this._state = this._state.update(req.channel, Set<AliveWebSocket<any>>(), sockets => sockets.delete(req.socket));
+      }
+
+      this._respond(req, OK, { channel: req.channel, token: req.token });
+
+      if (process.env.NODE_ENV !== 'PRODUCTION') {
+        console.log(`----> Socket '${req.socket.objectId}' unsubscribed from '${req.channel}' with ${observersCount} observers`);
+      }
+    });
   }
 
   protected _onPublish(req) {
@@ -100,15 +168,19 @@ export class ChannelHive extends SocketResponder implements NextObserver<any>, E
     this._respond(req, ERROR, { code: req.code, reason: req.reason });
   }
 
-  protected _channelPath(root: { channel: string, socket: { objectId: string } }, ...path): string[] {
-    return [root.channel, root.socket.objectId].concat(path);
+  protected _observerKey(req, channel: string, token: string) {
+    return PubSub.normalize(SYSTEM_PREFIX, WEBSOCKET_PREFIX, 'count', channel, req.socket.objectId, token);
+  }
+
+  protected _observerExpiresIn(): number {
+    return (PONG_TIMEOUT + PING_TIMEOUT) / 1000 + 1;
   }
 
   protected _pubChannel(subChannel: string) {
-    return [SYSTEM_PREFIX, WEBSOCKET_PREFIX, subChannel].join(':');
+    return PubSub.normalize(SYSTEM_PREFIX, WEBSOCKET_PREFIX, 'publish', subChannel);
   }
 
   protected _subChannel(pubChannel: string) {
-    return pubChannel.split(':').slice(-2).join(':');
+    return pubChannel.split(':').slice(3).join(':').replace('|', ':');
   }
 }
