@@ -134,29 +134,35 @@ export class Theron extends WebSocketSubject<any> {
 
       // Hook subscribe / unsubscribe events.
 
-      subscription.add(token.onErrorResumeNext<any>().subscribe(({ channel }) => {
-        options.onSubscribe && options.onSubscribe.next({ channel });
-      }));
+      subscription.add(
+        token.onErrorResumeNext<any>().subscribe(({ channel }) => {
+          options.onSubscribe && options.onSubscribe.next({ channel })
+        })
+      );
 
-      subscription.add(() => {
-        token.onErrorResumeNext<any>().subscribe(({ channel, token }) => {
+      subscription.add(
+        () => token.onErrorResumeNext<any>().subscribe(({ channel, token }) => {
           options.onUnsubscribe && options.onUnsubscribe.next({ channel });
 
           if (this.isConnected()) {
             this._toRequest(UNSUBSCRIBE, { channel, token }).subscribe(req => this.next(req));
           }
-        });
-      });
+        })
+      );
 
       // Pong the ping request.
 
-      subscription.add(token.mergeMap(({ token }) => this.filter(ping => ping.type === PING && ping.token === token)).onErrorResumeNext<any>().subscribe(
-        ({ token }) => this.next({ type: PONG, token })
-      ));
+      subscription.add(
+        token.mergeMap(({ token }) => this.filter(ping => ping.type === PING && ping.token === token)).onErrorResumeNext<any>().subscribe(({ token }) =>
+          this.next({ type: PONG, token })
+        )
+      );
 
       // Filter the channel messages from the main queue.
 
-      subscription.add(token.mergeMap(({ channel }) => this.filter(message => message.channel === channel)).subscribe(observer));
+      subscription.add(
+        token.mergeMap(({ token, channel }) => this.filter(message => message.token === token || message.channel === channel)).subscribe(observer)
+      );
 
       return subscription;
     });

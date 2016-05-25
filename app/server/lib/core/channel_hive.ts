@@ -18,19 +18,21 @@ import 'rxjs/add/operator/takeUntil';
 import 'rxjs/add/operator/timeout';
 
 export class ChannelHive extends SocketResponder implements NextObserver<any>, ErrorObserver<any> {
-  protected _notifier = new Subject<any>();
-  protected _state = Map<string, Set<AliveWebSocket<any>>>();
+  protected _anchor = new Subject<any>();
+  protected _channels = Map<string, Set<AliveWebSocket<any>>>();
+  protected _tokens = Map<string, AliveWebSocket<any>>();
   protected _sub = PubSub.fork();
 
   constructor() {
     super();
 
     this._sub.on('pmessage', this._broadcast);
-    this._sub.psubscribe(this._pubChannel('*'));
+    this._sub.psubscribe(PubSub.publishChannel('*'));
+    this._sub.psubscribe(PubSub.respondChannel('*'));
   }
 
   next(req) {
-    this._notifier.next(req);
+    this._anchor.next(req);
 
     switch (req.type) {
       case DISCONNECT:
@@ -64,13 +66,21 @@ export class ChannelHive extends SocketResponder implements NextObserver<any>, E
   }
 
   protected _broadcast = (pattern: string, channel: string, message: string) => {
-    this._state.get(this._subChannel(channel), Set<AliveWebSocket<any>>()).forEach(socket => {
-      socket.next(JSON.parse(message));
-    });
+    const origin = PubSub.toOriginChannel(channel);
+    const parsed = JSON.parse(message);
+
+    if (PubSub.isPublishChannel(pattern)) {
+      this._channels.get(origin, Set<AliveWebSocket<any>>()).forEach(socket => {
+        socket.next(parsed);
+      });
+    } else {
+      this._tokens.has(origin) && this._tokens.get(origin).next(parsed);
+    }
   }
 
   protected _onDisconnect(req) {
-    this._state = this._state.map(channel => channel.delete(req.socket)).filterNot(channel => channel.isEmpty()).toMap();
+    this._channels = this._channels.map(channel => channel.delete(req.socket)).filterNot(channel => channel.isEmpty()).toMap();
+    this._tokens = this._tokens.filter((token, socket) => socket === req.socket).toMap();
 
     try {
       PubSub.client.eval(pdel, 1, this._observerKey(req, '*', '*'));
@@ -88,12 +98,16 @@ export class ChannelHive extends SocketResponder implements NextObserver<any>, E
         return this._respond(req, ERROR, { code: SERVER_ERROR, reason: `Subscription isn't created`});
       }
 
-      this._state = this._state.update(req.channel, Set<AliveWebSocket<any>>(), sockets => sockets.add(req.socket));
+      this._tokens = this._tokens.set(req.token, req.socket);
+
+      // We can do it since a set is a collection of unique values.
+
+      this._channels = this._channels.update(req.channel, Set<AliveWebSocket<any>>(), sockets => sockets.add(req.socket));
 
       // Ping the observer and renew the experation on pong.
 
       const interval = Observable.interval(PING_TIMEOUT).takeUntil(
-        this._notifier.first(({ type, token, socket }) => (type === UNSUBSCRIBE && token == req.token) || (type === DISCONNECT && socket === req.socket))
+        this._anchor.first(({ type, token, socket }) => (type === UNSUBSCRIBE && token == req.token) || (type === DISCONNECT && socket === req.socket))
       );
 
       interval.do(() => req.socket.next({ type: PING, token: req.token })).mergeMap(() =>
@@ -135,6 +149,8 @@ export class ChannelHive extends SocketResponder implements NextObserver<any>, E
         return this._respond(req, ERROR, { code: SERVER_ERROR, reason: `Subscription isn't disposed`});
       }
 
+      this._tokens = this._tokens.set(req.token, req.socket);
+
       try {
         var observersCount = await PubSub.countKeys(this._observerKey(req, req.channel, '*'));
       } catch (err) {
@@ -143,7 +159,7 @@ export class ChannelHive extends SocketResponder implements NextObserver<any>, E
       }
 
       if (observersCount === 0) {
-        this._state = this._state.update(req.channel, Set<AliveWebSocket<any>>(), sockets => sockets.delete(req.socket));
+        this._channels = this._channels.update(req.channel, Set<AliveWebSocket<any>>(), sockets => sockets.delete(req.socket));
       }
 
       this._respond(req, OK, { channel: req.channel, token: req.token });
@@ -155,7 +171,7 @@ export class ChannelHive extends SocketResponder implements NextObserver<any>, E
   }
 
   protected _onPublish(req) {
-    PubSub.publish(this._pubChannel(req.channel), { type: PUBLISH, channel: req.channel, payload: req.payload });
+    PubSub.publish(PubSub.publishChannel(req.channel), { type: PUBLISH, channel: req.channel, payload: req.payload });
 
     this._respond(req, OK);
 
@@ -174,13 +190,5 @@ export class ChannelHive extends SocketResponder implements NextObserver<any>, E
 
   protected _observerExpiresIn(): number {
     return (PONG_TIMEOUT + PING_TIMEOUT) / 1000 + 1;
-  }
-
-  protected _pubChannel(subChannel: string) {
-    return PubSub.normalize(SYSTEM_PREFIX, WEBSOCKET_PREFIX, 'publish', subChannel);
-  }
-
-  protected _subChannel(pubChannel: string) {
-    return pubChannel.split(':').slice(3).join(':').replace('|', ':');
   }
 }
