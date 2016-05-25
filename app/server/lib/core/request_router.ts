@@ -1,11 +1,11 @@
 import * as crypto from 'crypto';
-import * as codes from '../../../../lib/constants';
 
 import { Observable } from 'rxjs/Observable';
 import { AppRecord } from '../../models/app';
 import { Theron } from '../../../../lib/driver/theron';
 import { SocketResponder } from './socket_responder';
 import { CONNECT, DISCONNECT, OK, ERROR, SUBSCRIBE, UNSUBSCRIBE, PUBLISH, SYSTEM_PREFIX } from '../../../../lib/constants';
+import { APP_DISCONNECTED, APP_DOES_NOT_EXIST, SERVER_ERROR, BAD_REQUEST, UNAUTHORIZED_REQUEST, MALFORMED_SYNTAX, INVALID_SECRET_KEY } from '../../../../lib/constants';
 import { CHANNEL_REGEX } from '../../../../lib/regex';
 import { logError } from '../../utils/log_error';
 
@@ -19,7 +19,7 @@ export class RequestRouter<T extends { type: string }, R> extends SocketResponde
 
   next = (req: T): Observable<R> => {
     if (!this._app && req.type !== CONNECT) {
-      throw { code: codes.APP_DISCONNECTED, reason: `App isn't connected` };
+      throw { code: APP_DISCONNECTED, reason: `App isn't connected` };
     }
 
     switch (req.type) {
@@ -48,11 +48,11 @@ export class RequestRouter<T extends { type: string }, R> extends SocketResponde
       this._app.objectId = this._sha256(this._app.id);
     } catch (err) {
       logError(err);
-      throw { code: codes.SERVER_ERROR, reason: `An error has occurred` };
+      throw { code: SERVER_ERROR, reason: `An error has occurred` };
     }
 
     if (!this._app) {
-      throw { code: codes.APP_DOES_NOT_EXIST, reason: `App '${req.app}' doesn't exist` };
+      throw { code: APP_DOES_NOT_EXIST, reason: `App '${req.app}' doesn't exist` };
     }
 
     return this._toReqRes(CONNECT, req, { app: this._app });
@@ -64,31 +64,31 @@ export class RequestRouter<T extends { type: string }, R> extends SocketResponde
 
   protected async _onSubscribe(req): Promise<any> {
     if (!req.channel && !req.query) {
-      return this._toReqRes(ERROR, req, { code: codes.BAD_REQUEST, reason: `Either channel nor query is given` });
+      return this._toReqRes(ERROR, req, { code: BAD_REQUEST, reason: `Either channel nor query is given` });
     }
 
     if (!this._app.development && Theron.sign(req.channel || req.query, this._app.secret) !== req.signature) {
-      return this._toReqRes(ERROR, req, { code: codes.UNAUTHORIZED_REQUEST, reason: `Invalid signature '${req.signature}' for '${req.channel || req.query}'` });
+      return this._toReqRes(ERROR, req, { code: UNAUTHORIZED_REQUEST, reason: `Invalid signature '${req.signature}' for '${req.channel || req.query}'` });
     }
 
     if (req.channel && !this._validateChannel(req.channel)) {
-      return this._toReqRes(ERROR, req, { code: codes.MALFORMED_SYNTAX, reason: `Channel '${req.channel}' includes invalid characters` });
+      return this._toReqRes(ERROR, req, { code: MALFORMED_SYNTAX, reason: `Channel '${req.channel}' includes invalid characters` });
     }
 
     if (req.channel) {
       return this._toReqRes(SUBSCRIBE, req, { token: uuid.v1(), channel: this._toChannel(req.channel) });
     } else {
-      return this._toReqRes(SUBSCRIBE, req, { token: uuid.v1(), channel: this._toChannel(true, this._sha256(req.query)) });
+      return this._toReqRes(SUBSCRIBE, req, { token: uuid.v1(), channel: this._toChannel(true, this._sha256(req.query)), app: this._app, query: req.query });
     }
   }
 
   protected async _onUnsubscribe(req): Promise<any> {
     if (!req.channel) {
-      return this._toReqRes(ERROR, req, { code: codes.BAD_REQUEST, reason: `Channel is required` });
+      return this._toReqRes(ERROR, req, { code: BAD_REQUEST, reason: `Channel is required` });
     }
 
     if (!this._validateChannel(req.channel)) {
-      return this._toReqRes(ERROR, req, { code: codes.MALFORMED_SYNTAX, reason: `Channel '${req.channel}' includes invalid characters` });
+      return this._toReqRes(ERROR, req, { code: MALFORMED_SYNTAX, reason: `Channel '${req.channel}' includes invalid characters` });
     }
 
     return this._toReqRes(UNSUBSCRIBE, req, { token: req.token, channel: req.channel });
@@ -96,15 +96,15 @@ export class RequestRouter<T extends { type: string }, R> extends SocketResponde
 
   protected async _onPublish(req): Promise<any> {
     if (!this._validateChannel(req.channel)) {
-      return this._toReqRes(ERROR, req, { code: codes.MALFORMED_SYNTAX, reason: `Channel '${req.channel}' includes invalid characters` });
+      return this._toReqRes(ERROR, req, { code: MALFORMED_SYNTAX, reason: `Channel '${req.channel}' includes invalid characters` });
     }
 
     if (this._isSystemChannel(req.channel)) {
-      return this._toReqRes(ERROR, req, { code: codes.MALFORMED_SYNTAX, reason: `Channel '${req.channel}' can't start with a reserved prefix 'TN'` });
+      return this._toReqRes(ERROR, req, { code: MALFORMED_SYNTAX, reason: `Channel '${req.channel}' can't start with a reserved prefix 'TN'` });
     }
 
     if (!this._app.development && this._app.secret !== req.secret) {
-      return this._toReqRes(ERROR, req, { code: codes.INVALID_SECRET_KEY, reason: `Invalid secret key for '${this._app.name}'` });
+      return this._toReqRes(ERROR, req, { code: INVALID_SECRET_KEY, reason: `Invalid secret key for '${this._app.name}'` });
     }
 
     return this._toReqRes(PUBLISH, req, { channel: this._toChannel(req.channel), payload: req.payload || {} });
