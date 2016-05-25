@@ -26,7 +26,6 @@
     "jsonwebtoken": "^5.7.0",
     "jspm": "^0.16.26",
     "knex": "^0.10.0",
-    "node-fetch": "^1.5.0",
     "objection": "^0.4.0",
     "pg": "^4.5.2",
     "pg-promise": "^3.5.3",
@@ -34,11 +33,13 @@
     "raygun": "^0.8.5",
     "react": "^0.14.7",
     "react-dom": "^0.14.7",
+    "redis": "^2.5.3",
     "request": "^2.72.0",
     "rxjs": "^5.0.0-beta.6",
     "serve-static": "^1.10.2",
     "throng": "^4.0.0",
-    "ws": "^1.0.1"
+    "ws": "^1.0.1",
+    "xmlhttprequest": "^1.8.0"
   },
   "devDependencies": {
     "autoprefixer": "^6.1.2",
@@ -82,8 +83,7 @@
       "redux": "npm:redux@^3.3.1",
       "redux-form": "npm:redux-form@^4.2.2",
       "redux-saga": "npm:redux-saga@^0.9.5",
-      "rxjs": "npm:rxjs@^5.0.0-beta.6",
-      "whatwg-fetch": "npm:whatwg-fetch@^0.11.0"
+      "rxjs": "npm:rxjs@^5.0.0-beta.6"
     },
     "devDependencies": {}
   },

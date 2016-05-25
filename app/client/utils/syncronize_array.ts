@@ -1,6 +1,6 @@
 import { Reducer } from 'redux';
 import { List, Record } from 'immutable';
-import { Theron, ROW_ADDED, ROW_REMOVED, ROW_MOVED, ROW_CHANGED, BEGIN_TRANSACTION, COMMIT_TRANSACTION, UNSUBSCRIBE_QUERY } from '../../../lib/driver/driver';
+import { Theron, ROW_ADDED, ROW_REMOVED, ROW_MOVED, ROW_CHANGED, BEGIN_TRANSACTION, COMMIT_TRANSACTION, UNSUBSCRIBE_QUERY } from '../../../lib/driver/theron';
 
 export interface SyncronizedArrayMetaProps {
   initialized: boolean;

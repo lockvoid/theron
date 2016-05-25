@@ -2,7 +2,7 @@ import { routeActions } from 'react-router-redux';
 import { take, race, call, put, fork, select } from 'redux-saga/effects';
 import { wrapObservable } from '../utils/wrap_observable';
 import { REDIRECT_TO_FIRST_APP, SELECT_APP, CREATE_APP, UPDATE_APP, DELETE_APP, WATCH_APPS, UNWATCH_APPS } from '../actions/index';
-import { Theron, ROW_ADDED, ROW_CHANGED, ROW_REMOVED } from '../../../lib/driver/driver';
+import { Theron, ROW_ADDED, ROW_CHANGED, ROW_REMOVED } from '../../../lib/driver/theron';
 
 function* watchCreate() {
   while (true) {

@@ -8,6 +8,7 @@ function start(id) {
   // Import
 
   require('../dist/server/app/server/config/objection');
+  require('../dist/server/app/server/config/xmlhttprequest');
 
   const server = require('../dist/server/app/server/server');
   const socket = require('../dist/server/app/server/socket');
@@ -24,6 +25,6 @@ function start(id) {
   });
 }
 
-const WORKERS = process.env.NODE_ENV === 'production' ? process.env.WEB_CONCURRENCY : os.cpus().length;
+const WORKERS = process.env.NODE_ENV === 'production' ? process.env.WEB_CONCURRENCY : 1;
 
 throng({ start, workers: WORKERS, lifetime: Infinity });

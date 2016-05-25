@@ -1,6 +1,6 @@
 import * as express from 'express';
 
-import { Theron } from '../../../lib/driver/driver';
+import { Theron } from '../../../lib/driver/theron';
 import { UserRecord, AppRecord } from '../models';
 import { AuthError, NotFoundError } from '../lib/errors';
 import { wrap, signUser, createNotifier } from '../utils';

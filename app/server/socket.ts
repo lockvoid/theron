@@ -1,27 +1,41 @@
-import * as ws from 'ws';
-import * as pg from 'pg';
+import * as WebSocket from 'ws';
 
-import { Router } from './lib/core/router';
-import { verifyClient } from './utils/verify_client';
+import { PingWebSocket } from './lib/core/ping_websocket';
+import { RequestReducer } from './lib/core/request_reducer';
+import { ResponseReducer } from './lib/core/response_reducer';
+
+const responses = new ResponseReducer();
 
 export const app = async (httpServer) => {
-  const socketServer = new ws.Server({ server: httpServer, verifyClient: <any>verifyClient });
+  const socketServer = new WebSocket.Server({ server: httpServer });
 
-  socketServer.on('connection', (socket) => {
-    let { db, app, notifier } = <any>socket.upgradeReq;
+  socketServer.on('connection', socket => {
+    const pingSocket = new PingWebSocket(socket);
 
-    const router = new Router(socket, app, db, notifier);
+    if (process.env.NODE_ENV !== 'PRODUCTION') {
+      console.log(`----> Session (${pingSocket.objectId}) is opened`);
 
-    router.subscribe(
-      message => {
-        console.log(`Message: ${JSON.stringify(message)}`);
-      },
+      pingSocket.subscribe(
+        message => {
+          console.log(`<---- Message: ${JSON.stringify(message)}`);
+        },
 
-      error => {
-      },
+        err => {
+          console.log(`----> Error: ${JSON.stringify({ code: err.code, reason: err.reason})}`);
+        },
 
-      () => {
-      }
-    );
+        () => {
+          console.log(`----> Session (${pingSocket.objectId}) is closed`);
+        }
+      );
+    }
+
+    // Waiting for each new request to proceed before merging the next.
+
+    const requests = pingSocket.enqueue(new RequestReducer().next);
+
+    // Then broadcast across the connected clients.
+
+    requests.subscribe(responses);
   });
 }

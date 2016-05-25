@@ -1,6 +1,6 @@
 import { Reducer } from 'redux';
 import { SIGNIN_SUCCESS, LOGOUT_SUCCESS } from '../actions/index';
-import { Theron } from '../../../lib/driver/driver';
+import { Theron } from '../../../lib/driver/theron';
 
 export const theron: Reducer = (state = { ref: connectTheron() }, action) => {
   switch (action.type) {

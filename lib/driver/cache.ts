@@ -2,10 +2,9 @@ import { Subject } from 'rxjs/Subject';
 import { Subscriber } from 'rxjs/Subscriber';
 import { AnonymousSubscription } from 'rxjs/Subscription';
 import { OrderedMap } from 'immutable';
-
 import { ROW_ADDED, ROW_CHANGED, ROW_MOVED, ROW_REMOVED, BEGIN_TRANSACTION, COMMIT_TRANSACTION, ROLLBACK_TRANSACTION } from '../constants';
 
-export class ReplayCache extends Subject<any> {
+export class Cache extends Subject<any> {
   protected _cache = OrderedMap<string, any>();
 
   protected _next(action) {
