@@ -37,7 +37,7 @@ export class PubSub {
     return channel.startsWith(PubSub.publishChannel(''));
   }
 
-  static async countKeys(pattern: string): Promise<number> {
+  static async countKeys(pattern: string, limit = Number.POSITIVE_INFINITY): Promise<number> {
     var count = 0; var cursor = 0;
 
     while (true) {
@@ -50,6 +50,11 @@ export class PubSub {
       }
 
       count += keys.length;
+
+      if (count > limit) {
+        count = limit;
+        break;
+      }
     }
 
     return count;
