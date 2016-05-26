@@ -5,7 +5,7 @@ import { SYSTEM_PREFIX, WEBSOCKET_PREFIX, DATABASE_PREFIX } from '../../../../li
 export class PubSub {
   static client = createClient(process.env.REDIS_URL);
 
-  static publish(channel: string, data) {
+  static publish<T>(channel: string, data: T) {
     PubSub.client.publish(channel, JSON.stringify(data));
   }
 
@@ -14,15 +14,19 @@ export class PubSub {
   }
 
   static normalize(...parts: string[]): string {
-    return parts.map(part => String(part).replace(':', '|')).join(':').toLowerCase();
+    return parts.map(part => String(part)).join(':').toLowerCase();
+  }
+
+  static sanitize(...parts: string[]): string {
+    return PubSub.normalize(...parts.map(part => String(part).replace(':', '|')));
   }
 
   static publishChannel(suffix: string): string {
-    return PubSub.normalize(SYSTEM_PREFIX, WEBSOCKET_PREFIX, 'publish', suffix);
+    return PubSub.sanitize(SYSTEM_PREFIX, WEBSOCKET_PREFIX, 'publish', suffix);
   }
 
   static respondChannel(suffix: string): string {
-    return PubSub.normalize(SYSTEM_PREFIX, WEBSOCKET_PREFIX, 'respond', suffix);
+    return PubSub.sanitize(SYSTEM_PREFIX, WEBSOCKET_PREFIX, 'respond', suffix);
   }
 
   static toOriginChannel(channel: string): string {
