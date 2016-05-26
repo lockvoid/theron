@@ -26,7 +26,7 @@ export class AliveWebSocket<T> extends WebSocketSubject<T> {
   }
 
   enqueue<R>(next: (req: T) => Observable<R>) {
-    const assignThis = object => Object.assign(object, { socket: this });
+    const assignThis = object => Object.assign(object, { socket: this, session: this.objectId });
 
     return this.concatMap(next).map(assignThis).catch(err => Observable.throw(assignThis(err)));
   }

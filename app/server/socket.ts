@@ -1,12 +1,12 @@
 import * as WebSocket from 'ws';
 
 import { AliveWebSocket } from './lib/core/alive_websocket';
+import { SocketHive } from './lib/core/socket_hive';
 import { RequestRouter } from './lib/core/request_router';
-import { ChannelHive } from './lib/core/channel_hive';
 
 import 'rxjs/add/operator/share';
 
-const hive = new ChannelHive();
+const hive = new SocketHive();
 
 export const app = async (httpServer) => {
   const socketServer = new WebSocket.Server({ server: httpServer });

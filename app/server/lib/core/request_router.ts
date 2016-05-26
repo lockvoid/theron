@@ -63,7 +63,7 @@ export class RequestRouter<T extends { type: string }, R> extends SocketResponde
 
   protected async _onSubscribe(req): Promise<any> {
     if (!req.channel && !req.query) {
-      return this._toReqRes(ERROR, req, { code: BAD_REQUEST, reason: `Either channel nor query is given` });
+      return this._toReqRes(ERROR, req, { code: BAD_REQUEST, reason: `Channel is required` });
     }
 
     if (req.channel && !this._validateChannel(req.channel)) {
@@ -84,7 +84,7 @@ export class RequestRouter<T extends { type: string }, R> extends SocketResponde
     if (req.channel) {
       return this._toReqRes(SUBSCRIBE, req, { token: uuid.v1(), channel: this._toChannel(req.channel) });
     } else {
-      return this._toReqRes(SUBSCRIBE, req, { token: uuid.v1(), channel: this._toChannel(true, this._sha256(req.query)), app: this._app, query: req.query });
+      return this._toReqRes(SUBSCRIBE, req, { token: uuid.v1(), channel: this._toChannel(true, this._sha256(req.query)), query: req.query, app: this._app });
     }
   }
 
@@ -106,7 +106,7 @@ export class RequestRouter<T extends { type: string }, R> extends SocketResponde
     }
 
     if (this._isSystemChannel(req.channel)) {
-      return this._toReqRes(ERROR, req, { code: MALFORMED_SYNTAX, reason: `Channel '${req.channel}' can't start with a reserved prefix 'TN'` });
+      return this._toReqRes(ERROR, req, { code: MALFORMED_SYNTAX, reason: `Channel '${req.channel}' can't start with a reserved prefix '${SYSTEM_PREFIX}'` });
     }
 
     try {

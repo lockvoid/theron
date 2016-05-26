@@ -7,6 +7,7 @@ import { SocketResponder } from './socket_responder';
 import { AliveWebSocket } from './alive_websocket';
 import { pdel } from './lua_scripts';
 import { logError } from '../../utils/log_error';
+import { selectQueue, DEFAULT_QUEUE_OPTIONS } from '../../config/bull';
 import { DISCONNECT, PING, PONG, OK, ERROR, SUBSCRIBE, UNSUBSCRIBE, PUBLISH } from '../../../../lib/constants';
 import { SYSTEM_PREFIX, WEBSOCKET_PREFIX, DATABASE_PREFIX, PING_TIMEOUT, PONG_TIMEOUT } from '../../../../lib/constants';
 import { SERVER_ERROR } from '../../../../lib/constants';
@@ -17,7 +18,7 @@ import 'rxjs/add/operator/mergeMap';
 import 'rxjs/add/operator/takeUntil';
 import 'rxjs/add/operator/timeout';
 
-export class ChannelHive extends SocketResponder implements NextObserver<any>, ErrorObserver<any> {
+export class SocketHive extends SocketResponder implements NextObserver<any>, ErrorObserver<any> {
   protected _anchor = new Subject<any>();
   protected _channels = Map<string, Set<AliveWebSocket<any>>>();
   protected _tokens = Map<string, AliveWebSocket<any>>();
@@ -117,16 +118,22 @@ export class ChannelHive extends SocketResponder implements NextObserver<any>, E
            PubSub.client.expire(this._observerKey(req, req.channel, req.token), this._observerExpiresIn());
 
            if (process.env.NODE_ENV !== 'PRODUCTION') {
-             console.log(`----> Subscription '${req.socket.objectId}' is alive`);
+             console.log(`----> Subscription '${req.session}' is alive`);
            }
          },
 
          () => {
            if (process.env.NODE_ENV !== 'PRODUCTION') {
-             console.log(`----> Subscription '${req.socket.objectId}' is dead`);
+             console.log(`----> Subscription '${req.session}' is dead`);
            }
          }
       )
+
+      // Process database channels.
+
+      if (req.query) {
+        selectQueue.add({ app: req.app, channel: req.channel, session: req.session, token: req.token, query: req.query }, DEFAULT_QUEUE_OPTIONS);
+      }
 
       this._respond(req, OK, { channel: req.channel, token: req.token });
 
@@ -137,7 +144,7 @@ export class ChannelHive extends SocketResponder implements NextObserver<any>, E
           logError(err);
         }
 
-        console.log(`----> Socket '${req.socket.objectId}' subscribed to '${req.channel}' with ${observersCount} observers`);
+        console.log(`----> Socket '${req.session}' subscribed to '${req.channel}' with ${observersCount} observers`);
       }
     });
   }
@@ -165,7 +172,7 @@ export class ChannelHive extends SocketResponder implements NextObserver<any>, E
       this._respond(req, OK, { channel: req.channel, token: req.token });
 
       if (process.env.NODE_ENV !== 'PRODUCTION') {
-        console.log(`----> Socket '${req.socket.objectId}' unsubscribed from '${req.channel}' with ${observersCount} observers`);
+        console.log(`----> Socket '${req.session}' unsubscribed from '${req.channel}' with ${observersCount} observers`);
       }
     });
   }
@@ -185,7 +192,7 @@ export class ChannelHive extends SocketResponder implements NextObserver<any>, E
   }
 
   protected _observerKey(req, channel: string, token: string) {
-    return PubSub.normalize(SYSTEM_PREFIX, WEBSOCKET_PREFIX, 'observers', channel, req.socket.objectId, token);
+    return PubSub.sanitize(SYSTEM_PREFIX, WEBSOCKET_PREFIX, 'observers', channel, req.session, token);
   }
 
   protected _observerExpiresIn(): number {
