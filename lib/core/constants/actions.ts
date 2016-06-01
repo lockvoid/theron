@@ -1,0 +1,19 @@
+export const CONNECT = 'TN:CONNECT';
+export const DISCONNECT = 'TN:DISCONNECT';
+export const PING = 'TN:PING';
+export const PONG = 'TN:PONG';
+export const OK = 'TN:OK';
+export const ERROR = 'TN:ERROR';
+export const DISMISS = 'TN:DISMISS';
+export const SUBSCRIBE = 'TN:SUBSCRIBE';
+export const UNSUBSCRIBE = 'TN:UNSUBSCRIBE';
+export const PUBLISH = 'TN:PUBLISH';
+export const EXECUTE = 'TN:EXECUTE';
+
+export const ROW_ADDED = 'TN:ROW_ADDED';
+export const ROW_REMOVED = 'TN:ROW_REMOVED';
+export const ROW_MOVED = 'TN:ROW_MOVED';
+export const ROW_CHANGED = 'TN:ROW_CHANGED';
+export const BEGIN_TRANSACTION = 'TN:BEGIN_TRANSACTION';
+export const COMMIT_TRANSACTION = 'TN:COMMIT_TRANSACTION';
+export const ROLLBACK_TRANSACTION = 'TN:ROLLBACK_TRANSACTION';

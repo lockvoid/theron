@@ -1,5 +1,11 @@
 import { Model } from 'objection';
 
+export interface BaseSchema {
+  id: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export class BaseModel extends Model {
   $beforeInsert(context) {
     super.$beforeInsert(context);

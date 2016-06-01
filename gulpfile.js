@@ -38,7 +38,9 @@ gulp.task('publish.cdn.driver', publishDriverToCDN);
 
 gulp.task('publish.npm.driver', publishDriverToNPM);
 
-gulp.task('default', gulp.series(clean, buildTasks, gulp.parallel(startWeb, startWorker), watchTasks));
+gulp.task('default', gulp.series(clean, buildTasks, gulp.parallel(startServer, startWorker, startDiffer), gulp.parallel(watchTasks, watchStart)));
+
+gulp.task('compile', gulp.series(clean, buildTasks, gulp.parallel(watchTasks)));
 
 gulp.task('release', gulp.series(clean, buildTasks, gulp.parallel(bundleClient, 'build.npm.driver', 'build.cdn.driver', minifyCss, minifyJs), revPublic, repPublic));
 
@@ -52,40 +54,70 @@ function clean() {
 
 // Start
 
-var webProcess = null;
-var workerProcess = null;
+const HARMONY_FLAGS = [
+  '--harmony_default_parameters',
+  '--harmony_destructuring',
+  '--harmony_modules',
+  '--harmony_rest_parameters',
+];
 
-function startWeb(done) {
-  webProcess = cprocess.spawn('node', ['--harmony_destructuring', '--harmony_default_parameters', '--harmony_rest_parameters', 'bin/web'], { stdio: 'inherit' });
+var serverProcess = null;
+var workerProcess = null;
+var differProcess = null;
+
+function startServer(done) {
+  serverProcess = cprocess.spawn('node', HARMONY_FLAGS.concat(['bin/server']), { stdio: 'inherit' });
   done();
 }
 
-function killWeb(done) {
-  if (webProcess) {
-    webProcess.once('close', done);
-    webProcess.kill();
+function killServer(done) {
+  if (!serverProcess) {
+    return done();
   }
 
-  webProcess = null;
+  serverProcess.once('close', done);
+  serverProcess.kill();
+  serverProcess = null;
 }
 
 function startWorker(done) {
-  workerProcess = cprocess.spawn('node', ['--harmony_destructuring', '--harmony_default_parameters', '--harmony_rest_parameters', 'bin/worker'], { stdio: 'inherit' });
+  workerProcess = cprocess.spawn('node', HARMONY_FLAGS.concat(['bin/worker']), { stdio: 'inherit' });
   done();
 }
 
 function killWorker(done) {
-  if (workerProcess) {
-    workerProcess.once('close', done);
-    workerProcess.kill();
+  if (!workerProcess) {
+    return done();
   }
 
+  workerProcess.once('close', done);
+  workerProcess.kill();
   workerProcess = null;
 }
 
-// Server
+function startDiffer(done) {
+  differProcess = cprocess.spawn('node', HARMONY_FLAGS.concat(['bin/differ']), { stdio: 'inherit' });
+  done();
+}
+
+function killDiffer(done) {
+  if (!differProcess) {
+    return done();
+  }
+
+  differProcess.once('close', done);
+  differProcess.kill();
+  differProcess = null;
+}
+
+function watchStart() {
+  gulp.watch('dist/server/**/*', gulp.series(gulp.parallel(killServer, killWorker, killDiffer), gulp.parallel(startServer, startWorker, startDiffer)));
+}
 
 const serverProject = ts.createProject('app/server/tsconfig.json', { typescript: typescript });
+const clientProject = ts.createProject('app/client/tsconfig.json', { typescript: typescript });
+
+// Server
 
 function buildServer() {
   const source = ['{app/server,lib,db}/**/*.{ts,tsx}', 'typings/main.d.ts'];
@@ -95,15 +127,15 @@ function buildServer() {
 }
 
 function watchServer() {
-  gulp.watch('{app/server,lib,db}/**/*.{ts,tsx}', gulp.series(gulp.parallel(killWeb, killWorker), buildServer, gulp.parallel(startWeb, startWorker)));
+  gulp.watch('{app/server,lib,db}/**/*.{ts,tsx}', gulp.series(gulp.parallel(killServer, killWorker, killDiffer), buildServer));
 }
 
 // Client
 
-const clientProject = ts.createProject('app/client/tsconfig.json', { typescript: typescript });
-
 function buildClient() {
-  const source = ['{app/client,lib}/**/*.{ts,tsx}', 'typings/browser.d.ts'];
+  // Exclude not isomorphic files until gulp-typescript#190 isn't resolved
+
+  const source = ['{app/client,lib}/**/*.{ts,tsx}', 'typings/browser.d.ts', '!lib/core/*.ts'];
   const result = gulp.src(source).pipe(sourcemaps.init()).pipe(preprocess({ includeBase: __dirname })).pipe(ts(clientProject));
 
   return result.js.pipe(babel({ presets: ['es2015'] })).pipe(sourcemaps.write()).pipe(gulp.dest('dist/client'));

@@ -1,25 +1,18 @@
 'use strict';
 
-const os = require('os');
 const throng = require('throng');
+const config = require('./config');
 
 function start(id) {
-  // Bootstrap
-
-  require('../dist/server/app/server/config/objection');
+  require('../dist/server/app/server/config');
   require('../dist/server/app/server/jobs');
-
-  console.log(`Worker ${id} is started`);
-
-  // Teardown
 
   process.on('SIGTERM', () => {
     console.log(`Worker ${id} is exiting...`);
-
-    process.exit();
+    setTimeout(process.exit, config.EXIT_TIMEOUT);
   });
+
+  console.log(`Worker ${id} is started`);
 }
 
-const WORKERS = process.env.NODE_ENV === 'production' ? (process.env.WEB_CONCURRENCY || os.cpus().length) : 1;
-
-throng({ start, workers: WORKERS, lifetime: Infinity });
+throng({ start, workers: config.WORKER_WORKERS, lifetime: Infinity });

@@ -1,6 +1,16 @@
 import { Model } from 'objection';
 import { randomBytes } from 'crypto';
-import { BaseModel } from './base_model';
+import { BaseModel, BaseSchema } from './base_model';
+
+export interface AppSchema extends BaseSchema {
+  id: number;
+  user_id: number;
+  name: string;
+  development: boolean;
+  db_url: string;
+  app_url: string;
+  secret: string;
+}
 
 export class AppRecord extends BaseModel {
   static tableName = 'apps';

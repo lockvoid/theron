@@ -1,13 +1,11 @@
 import * as bull from 'bull';
 import * as url from 'url';
 
-import { logError } from '../utils/log_error'
-
-export const DEFAULT_QUEUE_OPTIONS = { attempts: 5, backoff: { type: 'exponential', delay: 3000 } };
+import { logError } from '../../../lib/core/utils/log_error'
 
 const { port, hostname, auth } = url.parse(process.env.REDIS_URL || 'redis://127.0.0.1:6379');
 
-function createQueue(id: string) {
+export function createQueue(id: string) {
   const queue = bull(id, parseInt(port), hostname, { auth_pass: String(auth).split(':')[1] });
 
   queue.on('failed', (job, err) => {
@@ -16,5 +14,3 @@ function createQueue(id: string) {
 
   return queue;
 }
-
-export const databaseQueue = createQueue('database');

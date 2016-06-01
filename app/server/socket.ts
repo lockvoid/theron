@@ -1,46 +1,43 @@
 import * as WebSocket from 'ws';
 
-import { AliveWebSocket } from './lib/core/alive_websocket';
-import { SocketHive } from './lib/core/socket_hive';
-import { RequestRouter } from './lib/core/request_router';
-
-import 'rxjs/add/operator/share';
+import { Subscription, AnonymousSubscription } from 'rxjs/Subscription';
+import { AliveWebSocket } from '../../lib/core/alive_websocket';
+import { SocketHive } from '../../lib/core/socket_hive';
+import { RequestRouter } from '../../lib/core/request_router';
+import { SERVER_RESTARTING } from '../../lib/core/constants/errors';
 
 const hive = new SocketHive();
 
-export const app = async (httpServer) => {
+export function up(httpServer): AnonymousSubscription {
   const socketServer = new WebSocket.Server({ server: httpServer });
 
   socketServer.on('connection', socket => {
     const aliveSocket = new AliveWebSocket(socket);
 
     if (process.env.NODE_ENV !== 'PRODUCTION') {
-      console.log(`----> Session (${aliveSocket.objectId}) is opened`);
+      console.log(`SERVER: Session (${aliveSocket.id}) is opened`);
 
       aliveSocket.subscribe(
         message => {
-          console.log(`<---- Message: ${JSON.stringify(message)}`);
+          console.log(`SERVER: Message ${JSON.stringify(message)}`);
         },
 
         err => {
-          console.log(`----> Error: ${JSON.stringify({ code: err.code, reason: err.reason})}`);
+          console.log(`SERVER: Error ${JSON.stringify({ code: err.code, reason: err.reason})}`);
         },
 
         () => {
-          console.log(`----> Session (${aliveSocket.objectId}) is closed`);
+          console.log(`SERVER: Session (${aliveSocket.id}) is closed`);
         }
       );
     }
 
-    // Waiting for each new request to proceed before merging the next.
-
-    const router = aliveSocket.enqueue(new RequestRouter().next).share();
-
-    // Then broadcast across the connected clients.
-
-    router.subscribe(hive);
+    const router = new RequestRouter(aliveSocket).subscribe(hive);
   });
-}
 
-export function teardown() {
+  return new Subscription(() => {
+    socketServer.clients.forEach(socket => {
+      socket.close(SERVER_RESTARTING, `Theron is restarting`);
+    });
+  });
 }

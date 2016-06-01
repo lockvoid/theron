@@ -14,6 +14,7 @@ System.config({
     "core-js": "npm:core-js@1.2.6",
     "immutable": "npm:immutable@3.8.1",
     "jwt-decode": "npm:jwt-decode@2.0.1",
+    "qs": "npm:qs@6.2.0",
     "react": "npm:react@0.14.8",
     "react-dom": "npm:react-dom@0.14.8",
     "react-redux": "npm:react-redux@4.4.5",
