@@ -1,6 +1,6 @@
 import { Reducer } from 'redux';
 import { List, Record } from 'immutable';
-import { Theron, ROW_ADDED, ROW_REMOVED, ROW_MOVED, ROW_CHANGED, BEGIN_TRANSACTION, COMMIT_TRANSACTION, UNSUBSCRIBE_QUERY } from '../../../lib/driver/theron';
+import { Theron, ROW_ADDED, ROW_REMOVED, ROW_MOVED, ROW_CHANGED, BEGIN_TRANSACTION, COMMIT_TRANSACTION } from '../../../lib/driver/theron';
 
 export interface SyncronizedArrayMetaProps {
   initialized: boolean;
@@ -19,6 +19,9 @@ export function syncronizeArray<T>(query: string, resetAction: string) {
     }
 
     switch (action.type) {
+      case BEGIN_TRANSACTION:
+        return action.initial ? state.clear() : state;
+
       case ROW_ADDED:
         return rowAdded(state, action.payload);
 
@@ -32,7 +35,7 @@ export function syncronizeArray<T>(query: string, resetAction: string) {
         return rowRemoved(state, action.payload);
 
       case resetAction:
-        return List<T>();
+        return state.clear();
 
       default:
         return state;

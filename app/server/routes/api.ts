@@ -67,11 +67,11 @@ api.delete('/apps/:appId', wrap(async ({ currentUser, params, body }, res, next)
   res.json({});
 }));
 
-api.get('/apps', ({ currentUser, query }, res) => {
-  const queryText = currentUser.$relatedQuery('apps').orderBy(query.orderBy).toString();
-  const querySignature = Theron.sign(queryText, process.env['THERON_SECRET']);
+api.get('/apps', ({ currentUser }, res) => {
+  const query = currentUser.$relatedQuery('apps').limit(10).toString();
+  const signature = Theron.sign(query, process.env['THERON_SECRET']);
 
-  res.json({ queryText, querySignature });
+  res.json({ query, signature });
 });
 
 api.get('/apps/name/:name/uniqueness', wrap(async ({ params, query }, res, next) => {
