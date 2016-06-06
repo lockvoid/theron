@@ -25,7 +25,7 @@
     "foreman": "^1.4.1",
     "immutable": "^3.7.6",
     "jsonwebtoken": "^5.7.0",
-    "jspm": "^0.16.26",
+    "jspm": "^0.16.36",
     "knex": "^0.10.0",
     "node-uuid": "^1.4.7",
     "objection": "^0.4.0",

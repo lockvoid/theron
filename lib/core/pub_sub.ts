@@ -23,7 +23,7 @@ export class PubSub {
     return parts.map(part => String(part)).join(':').toLowerCase()
   }
 
-  static hmac(data: string, secret: string): string {
+  static hmac(data: string = '', secret: string = ''): string {
     return crypto.createHmac('sha256', secret).update(data).digest('hex');
   }
 

@@ -1,7 +1,7 @@
 import * as bull from 'bull';
 import * as url from 'url';
 
-import { logError } from '../../../lib/core/utils/log_error'
+import { logError } from './log_error'
 
 const { port, hostname, auth } = url.parse(process.env.REDIS_URL || 'redis://127.0.0.1:6379');
 

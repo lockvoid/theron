@@ -160,7 +160,6 @@ export class DatabaseNode extends AnonymousSubject<any> {
 
     this._hashes.get(channel).subscribe(null, () => {}, () => {
       if (initial) {
-        console.log('NODE: execute job');
         executorQueue.add({ app: this._app, query, channel, session });
       }
     });

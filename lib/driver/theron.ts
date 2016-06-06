@@ -63,7 +63,11 @@ export class Theron extends WebSocketSubject<any> {
   }
 
   constructor(url: string, protected _options: TheronOptions) {
-    super({ url });
+    super({ url: (url.startsWith('http') ? url.replace('http', 'ws') : url) });
+
+    if (!this._options || !this._options.app) {
+      throw 'App name is required';
+    }
 
     Object.assign(this._config, {
       onOpen: {

@@ -88,7 +88,7 @@ export class RequestRouter extends Observable<any /* TODO */> {
     }
 
     if (!this._app) {
-      throw { code: NOT_FOUND, reason: `App '${name}' doesn't exist` };
+      throw { code: NOT_FOUND, reason: `App '${app}' doesn't exist` };
     }
 
     this._respond({ type: OK, id, message: 'Greatings from Cybertron!' });
@@ -110,8 +110,8 @@ export class RequestRouter extends Observable<any /* TODO */> {
       return this._respond({ type: ERROR, id, code: BAD_REQUEST, reason: `Channel '${channel}' includes invalid characters` });
     }
 
-    if (!this._app.development && !this._isSignedChannel(channel, signature, this._app.secret)) {
-      return this._respond({ type: ERROR, id, code: UNAUTHORIZED_REQUEST, reason: `Invalid signature '${signature}' for '${channel}'` });
+    if (!this._app.development && !this._isSignedChannel(channel || query, signature, this._app.secret)) {
+      return this._respond({ type: ERROR, id, code: UNAUTHORIZED_REQUEST, reason: `Invalid signature '${signature}' for '${channel || query}'` });
     }
 
     const token = uuid.v1();

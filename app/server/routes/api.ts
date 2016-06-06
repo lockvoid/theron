@@ -68,7 +68,7 @@ api.delete('/apps/:appId', wrap(async ({ currentUser, params, body }, res, next)
 }));
 
 api.get('/apps', ({ currentUser }, res) => {
-  const query = currentUser.$relatedQuery('apps').limit(10).toString();
+  const query = currentUser.$relatedQuery('apps').toString();
   const signature = Theron.sign(query, process.env['THERON_SECRET']);
 
   res.json({ query, signature });

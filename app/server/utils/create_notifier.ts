@@ -1,32 +1,36 @@
 import { DbError } from '../lib/errors/db_error';
 
-const pg = require('pg-promise')();
+import * as pg from 'pg';
 
-export async function createNotifier(dbUrl) {
-  const db = pg(dbUrl);
+export async function createNotifier(databaseUrl) {
+  new Promise((resolve, reject) => {
+    pg.connect(databaseUrl, (err, conn, done) => {
+      if (err) {
+        return reject(new DbError(400, { db_url: `Can't connect to this database` }));
+      }
 
-  try {
-    await db.query('SELECT 1');
-  } catch(error) {
-    throw new DbError(400, { db_url: `Can't connect to this database` });
-  }
+      conn.query(`
+        create or replace function theron_notify_trigger() returns trigger as $$ begin
+          case tg_op
+          when 'DELETE' then
+            perform pg_notify('theron_watchers', tg_op || ',' || tg_table_name || ',' || old.id);
+          else
+            perform pg_notify('theron_watchers', tg_op || ',' || tg_table_name || ',' || new.id);
+          end case;
 
-  try {
-    await db.query(`
-      create or replace function theron_notify_trigger() returns trigger as $$ begin
-        case tg_op
-        when 'DELETE' then
-          perform pg_notify('theron_watchers', tg_op || ',' || tg_table_name || ',' || old.id);
-        else
-          perform pg_notify('theron_watchers', tg_op || ',' || tg_table_name || ',' || new.id);
-        end case;
+          return null;
+        end;
 
-        return null;
-      end;
+        $$ language plpgsql;
+      `, (err, result) => {
+        done();
 
-      $$ language plpgsql;
-    `);
-  } catch(error) {
-    throw new DbError(400, { db_url: `Can't setup this database` });
-  }
+        if (err) {
+          return reject(new DbError(400, { db_url: `Can't setup this database` }));
+        }
+
+        resolve();
+      });
+    });
+  });
 }

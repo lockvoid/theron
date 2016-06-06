@@ -24,7 +24,7 @@ export class WebSocketSubscription extends Subscription {
   unsubscribe() {
     super.unsubscribe();
 
-    const { subject: { observers } } = this;
+    const subject = this.subject, observers = this.subject.observers;
 
     if (!observers || observers.length === 0 || this.subject.isStopped || this.subject.isUnsubscribed) {
       return;

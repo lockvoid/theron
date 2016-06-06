@@ -30,9 +30,9 @@ const buildTasks = gulp.parallel(buildServer, buildClient, buildCss, buildJs, co
 
 const watchTasks = gulp.parallel(watchServer, watchClient, watchCss, watchJs, watchAssets);
 
-gulp.task('build.npm.driver', gulp.series(packageBrowserDriver, packageNodeDriver, packageDriverMeta));
+gulp.task('build.npm.driver', gulp.series(packageBrowserDriver, packageNodeDriver, copyPackageMeta));
 
-gulp.task('build.cdn.driver', gulp.series(buildBrowserDriver, buildGlobalBrowserDriver));
+gulp.task('build.cdn.driver', gulp.series(buildBrowserDriver, buildGlobalDriver));
 
 gulp.task('publish.cdn.driver', publishDriverToCDN);
 
@@ -45,7 +45,7 @@ gulp.task('compile', gulp.series(clean, buildTasks, gulp.parallel(watchTasks)));
 gulp.task('release', gulp.series(clean, buildTasks, gulp.parallel(bundleClient, 'build.npm.driver', 'build.cdn.driver', minifyCss, minifyJs), revPublic, repPublic));
 
 function packageMeta() {
-  return JSON.parse(fs.readFileSync('./lib/driver/package.json'));
+  return JSON.parse(fs.readFileSync('./lib/driver/meta/package.json'));
 }
 
 function clean() {
@@ -146,7 +146,7 @@ function watchClient() {
 }
 
 function bundleClient() {
-  return jspm.bundleSFX('babel-polyfill + dist/client/app/client/main', 'dist/public/app.js', { minify: true, sourceMaps: true});
+  return jspm.bundleSFX('babel-polyfill + dist/client/app/client/client', 'dist/public/app.js', { minify: true, sourceMaps: true});
 }
 
 // Public
@@ -228,30 +228,24 @@ packageBuilder.config({
 });
 
 function packageBrowserDriver() {
-  return packageBuilder.buildStatic('dist/client/lib/driver/driver', `dist/driver/npm/lib/theron.js`, { minify: true, format: 'cjs' });
+  return packageBuilder.buildStatic('dist/client/lib/driver/theron', `dist/driver/npm/lib/theron.js`, { minify: true, format: 'cjs' });
 }
 
 function packageNodeDriver() {
-  return packageBuilder.buildStatic('dist/server/lib/driver/driver', `dist/driver/npm/lib/theron-node.js`, { minify: true, format: 'cjs' });
+  return packageBuilder.buildStatic('dist/server/lib/driver/theron', `dist/driver/npm/lib/theron-node.js`, { minify: true, format: 'cjs' });
 }
 
-function packageDriverMeta() {
-  const meta = [
-    'README.md',
-    'package.json',
-    'typings/theron.d.ts',
-  ];
-
-  return gulp.src([`lib/driver/{${meta.join(',')}}`]).pipe(gulp.dest(`dist/driver/npm`))
+function copyPackageMeta() {
+  return gulp.src(`lib/driver/meta/**/*`).pipe(gulp.dest(`dist/driver/npm`))
 }
 
 function buildBrowserDriver() {
   const version = packageMeta()['version'];
 
-  return jspm.bundleSFX(`dist/client/lib/driver/driver`, `dist/driver/cdn/${version}/theron.js`, { minify: true, format: 'cjs' });
+  return jspm.bundleSFX(`dist/client/lib/driver/theron`, `dist/driver/cdn/${version}/theron.js`, { minify: true, format: 'cjs' });
 }
 
-function buildGlobalBrowserDriver() {
+function buildGlobalDriver() {
   const version = packageMeta()['version'];
 
   const unwrapper = `

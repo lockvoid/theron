@@ -1,4 +1,3 @@
-import * as bull from 'bull';
 import * as redis from 'redis';
 
 import { Observable } from 'rxjs/Observable';
@@ -9,13 +8,14 @@ import { PubSub, PUBLISH_QUEUE, RESPOND_QUEUE } from './pub_sub';
 import { BEGIN_TRANSACTION, COMMIT_TRANSACTION, ROLLBACK_TRANSACTION } from './constants/actions';
 import { SYSTEM_PREFIX, DATABASE_PREFIX } from './constants/flags';
 import { logError } from './utils/log_error';
+import { createQueue } from './utils/create_queue';
 
 import 'rxjs/add/operator/first';
 import 'rxjs/add/operator/mergeMap';
 import 'rxjs/add/operator/reduce';
 import 'rxjs/add/operator/timeout';
 
-export const executorQueue = bull('executor', null, null);
+export const executorQueue = createQueue('executor');
 
 export interface DifferExecutorConfig {
   channel: string;
