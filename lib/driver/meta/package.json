@@ -1,12 +1,13 @@
 {
   "author": "Theron",
   "name": "theron",
+  "description": "Reactive storage for realtime apps. Stream data avoiding sync pitfalls.",
   "version": "0.2.0",
   "main": "./lib/theron-node.js",
   "browser": "./lib/theron.js",
   "dependencies": {
     "immutable": "^3.7.6",
-    "rxjs": "^5.0.0-beta.6",
+    "rxjs": "^5.0.0-beta.8",
     "xmlhttprequest": "^1.8.0",
     "ws": "^1.0.1"
   },
