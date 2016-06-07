@@ -133,7 +133,7 @@ function watchServer() {
 // Client
 
 function buildClient() {
-  // Exclude not isomorphic files until gulp-typescript#190 isn't resolved
+  // Exclude non-isomorphic files until gulp-typescript#190 isn't resolved
 
   const source = ['{app/client,lib}/**/*.{ts,tsx}', 'typings/browser.d.ts', '!lib/core/*.ts'];
   const result = gulp.src(source).pipe(sourcemaps.init()).pipe(preprocess({ includeBase: __dirname })).pipe(ts(clientProject));

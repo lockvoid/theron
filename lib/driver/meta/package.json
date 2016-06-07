@@ -2,7 +2,7 @@
   "author": "Theron",
   "name": "theron",
   "description": "Reactive storage for realtime apps. Stream data avoiding sync pitfalls.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "main": "./lib/theron-node.js",
   "browser": "./lib/theron.js",
   "dependencies": {
