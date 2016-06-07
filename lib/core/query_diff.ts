@@ -8,7 +8,7 @@ import { BaseRow } from './base_row';
 import { PubSub } from './pub_sub';
 import { QueryCursor } from './query_cursor';
 import { RedisCommand } from './redis_command';
-import { TheronDataArtefact } from './data_artefact';
+import { TheronRowArtefact } from './row_artefact';
 import { ROW_ADDED, ROW_CHANGED, ROW_MOVED, ROW_REMOVED } from './constants/actions';
 import { CACHE_TIMEOUT } from './constants/flags';
 import { BAD_REQUEST } from './constants/errors';
@@ -23,7 +23,7 @@ type AnyMap = Map<string, any>;
 
 export type PreparedState = { rows: List<AnyMap>, hashes: Map<string, string>, indexes: Map<string, List<string>> };
 
-export class QueryDiff<T extends BaseRow> extends Observable<TheronDataArtefact<T>> {
+export class QueryDiff<T extends BaseRow> extends Observable<TheronRowArtefact<T>> {
   constructor(protected _cursor: QueryCursor<T>, protected _cacheKey: string, protected _initial = false) {
     super();
   }
@@ -64,14 +64,14 @@ export class QueryDiff<T extends BaseRow> extends Observable<TheronDataArtefact<
     return new RedisCommand<string>(PubSub.client, 'set', this._cacheKey, JSON.stringify(optimized), 'px', CACHE_TIMEOUT);
   }
 
-  protected _calculateArtefacts(curr: PreparedState, prev: PreparedState): Observable<TheronDataArtefact<T>> {
+  protected _calculateArtefacts(curr: PreparedState, prev: PreparedState): Observable<TheronRowArtefact<T>> {
     if (this._initial || !prev) {
       return Observable.from(curr.rows.toArray()).map((row, index) => {
         return { type: ROW_ADDED, payload: { row: <T>row.toObject(), prevRowId: this._prevRowId(curr.rows, index) } }
       });
     }
 
-    return new Observable<TheronDataArtefact<T>>(observer => {
+    return new Observable<TheronRowArtefact<T>>(observer => {
       const ids = Set<string>().concat(Set.fromKeys(curr.hashes), Set.fromKeys(prev.hashes));
 
       ids.forEach(id => {

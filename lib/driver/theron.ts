@@ -7,7 +7,14 @@ import { NextObserver } from 'rxjs/Observer';
 import { WebSocketSubject } from '../websocket';
 import { QueryCache } from './query_cache';
 import { TheronDataArtefact } from '../core/data_artefact';
+import { TheronRowArtefact } from '../core/row_artefact';
 import { BaseRow } from '../core/base_row';
+import { BaseAction } from '../core/base_action';
+import { TheronAppOptions } from './app_options';
+import { TheronSecureOptions } from './secure_options';
+import { TheronAuthOptions } from './auth_options';
+import { TheronRescueOptions } from './rescue_options';
+import { TheronAsideEffects } from './aside_effects';
 import { CONNECT, DISCONNECT, PING, PONG, OK, ERROR, SUBSCRIBE, UNSUBSCRIBE, PUBLISH } from '../core/constants/actions';
 import { uuid } from './uuid';
 import { hmac } from './sha256';
@@ -30,29 +37,7 @@ import 'rxjs/add/operator/switchMap';
 
 export * from '../core/constants/actions';
 
-export interface TheronOptions {
-  app: string;
-  secret?: string;
-  onConnect?: NextObserver<any>;
-  onDisconnect?: NextObserver<any>;
-}
-
-export interface TheronAuthOptions {
-  headers?: any;
-  params?: any;
-}
-
-export interface TheronSecureOptions {
-  sign?: string;
-}
-
-export interface TheronRescueOptions {
-  retry?: boolean;
-}
-
-export type TheronObserverConfig = TheronRescueOptions & TheronSecureOptions & { onSubscribe?: NextObserver<any>, onUnsubscribe?: NextObserver<any> };
-
-export type TheronTransport<T> = T & { type: string, id: string }
+export type TheronTransport<T> = T & BaseAction;
 
 export class Theron extends WebSocketSubject<any> {
   protected _auth: TheronAuthOptions = {};
@@ -62,7 +47,7 @@ export class Theron extends WebSocketSubject<any> {
     return hmac(secret, data);
   }
 
-  constructor(url: string, protected _options: TheronOptions) {
+  constructor(url: string, protected _options: TheronAppOptions) {
     super({ url: (url.startsWith('http') ? url.replace('http', 'ws') : url) });
 
     if (!this._options || !this._options.app) {
@@ -71,11 +56,11 @@ export class Theron extends WebSocketSubject<any> {
 
     Object.assign(this._config, {
       onOpen: {
-        next: (event) => { this._options.onConnect && this._options.onConnect.next(event) }
+        next: event => { this._options.onConnect && this._options.onConnect.next(event) }
       },
 
       onClose: {
-        next: (event) => { this._options.onDisconnect && this._options.onDisconnect.next(event) }
+        next: event => { this._options.onDisconnect && this._options.onDisconnect.next(event) }
       },
 
       aroundUnbuffer: {
@@ -108,7 +93,7 @@ export class Theron extends WebSocketSubject<any> {
     return this._socket && this._socket.readyState === WebSocket.OPEN;
   }
 
-  request<T>(type: string, data?: any, options?: TheronRescueOptions): Observable<TheronTransport<T>> {
+  request<T, R>(type: string, data?: T, options?: TheronRescueOptions): Observable<TheronTransport<R>> {
     options = Object.assign({ retry: true }, options);
 
     let req = this._toRequest(type, data).do(req => this.next(req)).mergeMap(req => this.first(res => res.id === req.id).mergeMap(res =>
@@ -122,11 +107,11 @@ export class Theron extends WebSocketSubject<any> {
     return req.publishLast().refCount();
   }
 
-  publish<T>(channel: string, payload?: any, options?: TheronRescueOptions): Observable<TheronTransport<T>> {
+  publish<T>(channel: string, payload?: T, options?: TheronRescueOptions): Observable<TheronTransport<{}>> {
     return this.request(PUBLISH, { channel, payload, secret: this._options.secret }, options);
   }
 
-  join<T>(channel: string, options?: TheronObserverConfig): Observable<TheronTransport<T>> {
+  join<T>(channel: string, options?: TheronRescueOptions & TheronSecureOptions & TheronAsideEffects): Observable<TheronDataArtefact<T>> {
     options = Object.assign({ retry: true }, options);
 
     let req = new Observable(observer => {
@@ -190,7 +175,7 @@ export class Theron extends WebSocketSubject<any> {
     return req.share();
   }
 
-  watch<T extends BaseRow>(url: string, options?: TheronObserverConfig & { params?: any }): Observable<TheronDataArtefact<T>> {
+  watch<T extends BaseRow>(url: string, params?: any, options?: TheronRescueOptions & TheronAsideEffects): Observable<TheronRowArtefact<T>> {
     options = Object.assign({ retry: true }, options);
 
     let req = new Observable(observer => {
@@ -198,12 +183,12 @@ export class Theron extends WebSocketSubject<any> {
 
       // Fetch a query and a signature form the endpoint or return an empty signature.
 
-      const query = this._fetchQuery(url, options.params);
+      const query = this._fetchQuery(url, params);
 
       // Register the subscription on the server and receive an internal channel name.
 
       const token: Observable<any> = query.mergeMap(({ query, signature }) =>
-        this.request<{ token: string, channel: string }>(SUBSCRIBE, { query, signature }, { retry: false })
+        this.request<any, { token: string, channel: string }>(SUBSCRIBE, { query, signature }, { retry: false })
       ).publishLast().refCount();
 
       // Hook subscribe / unsubscribe events.

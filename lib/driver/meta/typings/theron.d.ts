@@ -13,7 +13,7 @@ export const BEGIN_TRANSACTION: string;
 export const COMMIT_TRANSACTION: string;
 export const ROLLBACK_TRANSACTION: string;
 
-export interface TheronOptions {
+export interface TheronAppOptions {
   app: string;
   secret?: string;
   onConnect?: NextObserver<any>;
@@ -33,24 +33,35 @@ export interface TheronRescueOptions {
   retry?: boolean;
 }
 
-export type TheronObserverConfig = TheronRescueOptions & TheronSecureOptions & { onSubscribe?: NextObserver<any>, onUnsubscribe?: NextObserver<any> };
-
-export type TheronTransport<T> = T & { type: string, id: string }
-
-export interface BaseAction { type: string; id?: string; channel?: string; token?: string; }
-
-export interface TheronDataArtefact<T extends BaseRow> extends BaseAction {
-  payload?: { row?: T, rowId?: string, prevRowId: string };
+export interface TheronAsideEffects {
+  onSubscribe?: NextObserver<any>;
+  onUnsubscribe?: NextObserver<any>;
 }
 
 export interface BaseRow {
-  id: string | number;
+  id: string;
 }
+
+export interface BaseAction {
+  type: string;
+  id?: string;
+  channel?: string;
+  token?: string;
+}
+
+export interface TheronDataArtefact<T> extends BaseAction {
+  payload?: T;
+}
+
+export interface TheronRowArtefact<T extends BaseRow> extends TheronDataArtefact<{ row: T, prevRowId: string }> {
+}
+
+export type TheronTransport<T> = T & BaseAction;
 
 export declare class Theron  {
   static sign(data: string, secret: string): string;
 
-  constructor(url: string, options: TheronOptions);
+  constructor(url: string, options: TheronAppOptions);
 
   setAuth(auth?: TheronAuthOptions): void;
 
@@ -58,11 +69,11 @@ export declare class Theron  {
 
   isConnected() : boolean;
 
-  request<T>(type: string, data?: any, options?: TheronRescueOptions): Observable<TheronTransport<T>>;
+  request<T, R>(type: string, data?: T, options?: TheronRescueOptions): Observable<TheronTransport<R>>;
 
-  publish<T>(channel: string, payload?: any, options?: TheronRescueOptions): Observable<TheronTransport<T>>;
+  publish<T>(channel: string, payload?: T, options?: TheronRescueOptions): Observable<TheronTransport<{}>>;
 
-  join<T>(channel: string, options?: TheronObserverConfig): Observable<TheronTransport<T>>;
+  join<T>(channel: string, options?: TheronRescueOptions & TheronSecureOptions & TheronAsideEffects): Observable<TheronDataArtefact<T>>;
 
-  watch<T extends BaseRow>(url: string, options?: TheronObserverConfig & { params?: any }): Observable<TheronDataArtefact<T>>;
+  watch<T extends BaseRow>(url: string, params?: any, options?: TheronRescueOptions & TheronAsideEffects): Observable<TheronRowArtefact<T>>;
 }
