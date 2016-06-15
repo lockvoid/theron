@@ -111,45 +111,16 @@ app.get('/:path(static|docs|blog)+*', (req, res) => {
 // Render pages
 
 app.get('/home', (req, res) => {
-  res.render('home', { isAuth: req.cookies.theronAuth === 'true' });
+  request(process.env['STATIC_URL']).on('error', (err) => res.send('Server error')).pipe(res);
 });
 
 app.get('/', (req, res) => {
   if (req.cookies.theronAuth === 'true') {
     res.render('app');
   } else {
-    res.render('home');
+    request(process.env['STATIC_URL']).on('error', (err) => res.send('Server error')).pipe(res);
   }
 });
-
-///
-import { Theron } from '../../lib/driver/theron';
-const secret = '4f81b927ecc74d4546ffacb70089fdadde8215e7a4e79f080a8ea5663002f851'
-app.post('/sign', (req, res) => {
-
-  if (req.body.payload) {
-    res.json({ signature: Theron.sign(req.body.channel + JSON.stringify(req.body.payload), secret) });
-  } else {
-    res.json({ signature: Theron.sign(req.body.channel, secret) });
-  }
-});
-
-app.post('/query', (req, res) => {
-  console.log('http: send query');
-  const query = 'select * from apps order by name LIMIT 3';
-  const signature = Theron.sign(query, secret);
-
-  res.json({ query, signature });
-});
-app.post('/query2', (req, res) => {
-  console.log('http: send query');
-  const query = 'select  apps order by name LIMIT 3';
-  const signature = Theron.sign(query, secret);
-
-  res.json({ query, signature });
-});
-
-////
 
 app.get('/*', (req, res) => {
   res.render('app');
