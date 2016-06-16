@@ -87,7 +87,7 @@ export class ShowApp extends React.Component<any, any> {
             </FieldBox>
 
             <FieldBox {...db_url}>
-              <div className="title">Postgress Url</div>
+              <div className="title">Postgres Url</div>
               <input type="text" {...db_url} placeholder="postgres://username:password@host/dbname" />
             </FieldBox>
 
